@@ -1,0 +1,25 @@
+syntax = "proto3";
+option go_package = "ryo29wx/Caol-Ila/interfaces/getDetail";
+
+package getDetail;
+
+service Getter {
+  rpc GetUserDetail (GetUserDetailRequest) returns (GetUserDetailResponse) {}
+}
+
+message GetUserDetailRequest {
+  string user_id = 1;
+}
+
+message GetUserDetailResponse {
+    string user_id = 1;
+    string user_name = 2;
+    string title = 3;
+    int32 last_login = 4;
+    int32 sex = 5;
+    string image_path = 6;
+    bool like = 7;
+    string career = 8;
+    string description = 9;
+    int32 chat_his_id = 10;
+}
