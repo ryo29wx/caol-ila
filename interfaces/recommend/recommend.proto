@@ -1,0 +1,28 @@
+syntax = "proto3";
+option go_package = "ryo29wx/Caol-Ila/interfaces/recommend";
+
+package recommend;
+
+service Recommender {
+  rpc Recommned (RecommnedRequest) returns (RecommendResponseList) {}
+}
+
+message RecommnedRequest {
+  string user_id = 1;
+  int32 page = 2;
+}
+
+message RecommendResponseList {
+    repeated RecommendResponse response = 1;
+    int32 total_num = 2;
+}
+
+message RecommendResponse {
+    string user_id = 1;
+    string user_name = 2;
+    string title = 3;
+    int32 last_login = 4;
+    int32 sex = 5;
+    string image_path = 6;
+    bool like = 7;
+}
