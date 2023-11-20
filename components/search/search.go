@@ -40,11 +40,21 @@ type server struct {
 	pb.UnimplementedSearcherServer
 }
 
+//	message SearchRequest {
+//		string query = 1;
+//		int32 sort = 2;
+//		string token = 3;
+//	 }
+//
 // Implement SearchItemServer using protocol buffer
-func (s *server) Search(ctx context.Context, query *pb.GetSearchQuery, sortCondition *pb.GetSearchSort, token *pb.GetSearchToken) (*pb.SearchResponse, error) {
+func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+
+	query := req.GetQuery()
+	sortCondition := req.GetSort()
+	token := req.GetToken()
 
 	// logging request log
-	logger.Debug("Request log", zap.String("query", query), zap.String("sort", sortCondition), zap.String("token", token))
+	logger.Debug("Request log", zap.String("query", query), zap.Int32("sort", sortCondition), zap.String("token", token))
 
 	// increment counter
 	searchReqCount.Inc()
@@ -136,7 +146,7 @@ func main() {
 		logger.Error("failed to set-up port listen with gRPC.")
 	}
 	grpcserver := grpc.NewServer()
-	pb.RegisterSearchItemsServer(grpcserver, &server{})
+	pb.RegisterSearcherServer(grpcserver, &server{})
 	if err := grpcserver.Serve(lis); err != nil {
 		logger.Error("failed to set-up application server.")
 		panic(err)
