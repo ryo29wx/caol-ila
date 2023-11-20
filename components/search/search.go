@@ -7,13 +7,12 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 
 	meilisearch "github.com/meilisearch/meilisearch-go"
-	pb "github.com/mockten/mockten_interfaces/searchitem"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	pb "github.com/ryo29wx/caolila_interfaces/search"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -24,13 +23,13 @@ const (
 
 var (
 	searchReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "search_req_total",
-		Help: "Total number of requests that have come to search-item",
+		Name: "search_request",
+		Help: "Total number of requests that have come to search query",
 	})
 
 	searchResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "search_res_total",
-		Help: "Total number of response that send from serch-item",
+		Name: "search_response",
+		Help: "Total number of response that send from serch query",
 	})
 
 	logger      *zap.Logger
@@ -38,44 +37,31 @@ var (
 )
 
 type server struct {
-	pb.UnimplementedSearchItemsServer
+	pb.UnimplementedSearcherServer
 }
 
 // Implement SearchItemServer using protocol buffer
-func (s *server) SearchItem(ctx context.Context, in *pb.GetSearchItem) (*pb.SearchResponse, error) {
-	productNameForSearch := in.GetProductName()
-	sellerNameForSearch := in.GetSellerName()
-	exhibitionDateForSearch := in.GetExhibitionDate()
-	updateDateForSearch := in.GetUpdateDate()
-	categoryForSearch := strconv.Itoa(int(in.GetCategory()))
-	rankingFilterForSearch := in.GetRankingFilter()
-	pageForSearch := in.GetPage() //int32
+func (s *server) Search(ctx context.Context, query *pb.GetSearchQuery, sortCondition *pb.GetSearchSort, token *pb.GetSearchToken) (*pb.SearchResponse, error) {
 
 	// logging request log
-	logger.Info("Request log", zap.String("productname", productNameForSearch),
-		zap.String("sellername", sellerNameForSearch),
-		zap.String("exhibitiondate", exhibitionDateForSearch),
-		zap.String("updatedate", updateDateForSearch),
-		zap.String("category", categoryForSearch),
-		zap.Int32("ranking", rankingFilterForSearch),
-		zap.Int32("page", pageForSearch))
+	logger.Debug("Request log", zap.String("query", query), zap.String("sort", sortCondition), zap.String("token", token))
 
 	// increment counter
 	searchReqCount.Inc()
-	products := make([]*pb.ResponseResult, 0)
+	responses := make([]*pb.ResponseResult, 0)
 
-	searchRes, err := meiliclient.Index("products").Search(productNameForSearch,
+	searchRes, err := meiliclient.Index("users").Search(query,
 		&meilisearch.SearchRequest{
 			Limit: 25,
 		})
 	if err != nil {
 		logger.Error("failed to search in some reasons.", zap.Error(err))
-		return &pb.SearchResponse{TotalNum: 0, Response: products}, err
+		return &pb.SearchResponse{TotalNum: 0, Responses: responses}, err
 	}
 
 	for _, val := range searchRes.Hits {
 		if s, ok := val.(*pb.ResponseResult); ok {
-			products = append(products, s)
+			responses = append(responses, s)
 		} else {
 			logger.Error("Value is not of type pb.ResponseResult")
 		}
@@ -84,14 +70,14 @@ func (s *server) SearchItem(ctx context.Context, in *pb.GetSearchItem) (*pb.Sear
 	// increment counter
 	searchResCount.Inc()
 
-	return &pb.SearchResponse{TotalNum: int32(len(products)), Response: products}, nil
+	return &pb.SearchResponse{TotalNum: int32(len(responses)), Responses: responses}, nil
 }
 
 func main() {
 	// set-up logging environment using zap
 	var err error
 
-	environment := os.Getenv("MOCKTEN_ENV")
+	environment := os.Getenv("CAOLILA_ENV")
 
 	if environment == "development" || environment == "" {
 		config := zap.NewDevelopmentConfig()
@@ -104,7 +90,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Println("failed to set-up zap log in searchitem. \n")
+		log.Println("failed to set-up zap log in search component. \n")
 		panic(err)
 	}
 
@@ -120,10 +106,10 @@ func main() {
 		APIKey: os.Getenv("MEILISEARCH_MASTERKEY"),
 	})
 
-	index := meiliclient.Index("products")
+	index := meiliclient.Index("users")
 
-	// If the index 'products' does not exist, Meilisearch creates it when you first add the documents.
-	byteValue, err := os.ReadFile("/opt/etc/products.json")
+	// If the index 'usres' does not exist, Meilisearch creates it when you first add the documents.
+	byteValue, err := os.ReadFile("/opt/etc/users.json")
 	if err != nil {
 		logger.Error("failed to load search json file", zap.Error(err))
 		panic(err)
