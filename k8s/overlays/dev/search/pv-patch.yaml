@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: search-pv
+spec:
+  capacity:
+    storage: 5Gi
+  gcePersistentDisk:
+    pdName: dev-search-disk
+    fsType: ext4

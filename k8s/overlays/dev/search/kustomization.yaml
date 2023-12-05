@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: dev-
+namespace: dev-caolila
+
+images:
+- name: search
+  newname: gcr.io/_GCP_PROJECT_ID_/search
+  newTag: v0.0.1
+- name: getmeili/meilisearch
+  newname: gcr.io/_GCP_PROJECT_ID_/meilisearch
+  newTag: v0.0.1
+replicas:
+- name: statefulset
+  count: 2
+
+resources:
+- ../../../base/search
+
+patches:
+- path: stateful-patch.yaml
+  target:
+    group: apps
+    version: v1
+    kind: StatefulSet
+    name: statefulset
+- path: secret-patch.yaml
+  target:
+    version: v1
+    kind: Secret
+    name: secret
+- path: pv-patch.yaml
+  target:
+    kind: PersistentVolume
+    name: pv
+- path: pvc-patch.yaml
+  target:
+    kind: PersistentVolumeClaim
+    name: pvc

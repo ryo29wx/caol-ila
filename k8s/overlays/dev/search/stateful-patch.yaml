@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  template:
+    spec:
+      volumes:
+        - name: meili-index
+          persistentVolumeClaim:
+            claimName: search-pvc
+      containers:
+      - name: searchitem-app
+        env:
+        - name: MEILISEARCH_MASTERKEY
+          valueFrom:
+            secretKeyRef:
+              key: masterkey
+              name: dev-searchitem-secret
+        - name: DEV_MONGO_SVC_SERVICE_HOST
+          valueFrom:
+            secretKeyRef:
+              key: DEV_MONGO_SVC_SERVICE_HOST
+              name: dev-mongo-svc.dev-mockten.svc.cluster.local
+        - name: DEV_MONGO_SVC_SERVICE_PORT
+          valueFrom:
+            secretKeyRef:
+              key: DEV_MONGO_SVC_SERVICE_PORT
+              name: 27017
