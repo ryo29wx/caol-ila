@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc
+spec:
+  clusterIP: None
+  ports:
+    - protocol: TCP
+      name: app
+      port: 3306
+      targetPort: 3306
+

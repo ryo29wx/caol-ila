@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  template:
+    spec:
+      containers:
+        - image: redis
+          name: redis
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200m
+            requests:
+              cpu: 100m
+              memory: 100m
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east1-b
