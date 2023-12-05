@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  selector:
+    matchLabels:
+      app: search
+  serviceName: svc
+  template:
+    metadata:
+      labels:
+        app: search
+    spec:
+      containers:
+      - name: search
+        image: search
+        ports:
+        - containerPort: 50051
+          name: apl
+        - containerPort: 9100
+          name: prometheus
+        command: ["./search"]
+        env:
+        - name: MEILISEARCH_MASTERKEY
+          valueFrom:
+            secretKeyRef:
+              name: search-secret
+              key: masterkey
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200m
+          requests:
+            cpu: 100m
+            memory: 100m
+      - name: meilisearch
+        image: getmeili/meilisearch
+        ports:
+        - containerPort: 7700
+          name: meilisearch
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+        volumeMounts:
+        - name: config-volume
+          mountPath: /meili-data/
+        - name: meili-index
+          mountPath: /data/index
+        # command: ["./meilisearch", "--config-file-path='./config.toml'"]
+        command: ["./meilisearch", "--master-key=$MEILISEARCH_MASTERKEY"]
+      volumes:
+      - name: config-volume
+        configMap:
+          name: meili-config
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east1-c
