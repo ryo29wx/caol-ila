@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    name: gorse-master-http
+    port: 8086
+    targetPort: 8086
+  - protocol: TCP
+    name: gorse-master-grpc
+    port: 8088
+    targetPort: 8088
+  selector:
+    app: gorse-master

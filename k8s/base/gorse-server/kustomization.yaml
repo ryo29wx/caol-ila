@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app: gorse-server
+
+namePrefix: gorse-server-
+
+configMapGenerator:
+- name: gorse-server-config
+  files:
+  - config/config.toml
+
+resources:
+- server-deploy.yaml
+- server-service.yaml
+- server-pv.yaml
+- server-pvc.yaml
