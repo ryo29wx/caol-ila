@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  selector:
+    matchLabels:
+      app: gorse-master
+  serviceName: svc
+  template:
+    metadata:
+      labels:
+        app: gorse-master
+    spec:
+      containers:
+      - name: gorse-master
+        image: zhenghaoz/gorse-master
+        ports:
+        - containerPort: 8086
+          name: gorse-master-http
+        - containerPort: 8088
+          name: gorse-master-grpc
+        command: ["sh", "-c", "/etc/gorse/config.toml", "--cache-path", "/var/lib/gorse/master_cache.data"]
+        env:
+        - name: GORSE_CACHE_STORE
+          value: "redis://redis:6379"
+        - name: GORSE_DATA_STORE
+          value: mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse
+        volumeMounts:
+        - mountPath: /etc/gorse/config.toml
+          name: config.toml
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+      volumes:
+      - name: config-volume
+        configMap:
+          name: gorse-master-config
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east1-c

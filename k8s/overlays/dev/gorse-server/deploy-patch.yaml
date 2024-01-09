@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+spec:
+  template:
+    spec:
+      volumes:
+        - name: gorse-server-data
+          persistentVolumeClaim:
+            claimName: gorse-server-pvc

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+spec:
+  selector:
+    matchLabels:
+      app: gorse-server
+  template:
+    metadata:
+      labels:
+        app: gorse-server
+    spec:
+      containers:
+      - name: gorse-server
+        image: zhenghaoz/gorse-server
+        ports:
+        - containerPort: 8089
+          name: gorse-server-http
+        command: ["--master-host", "master", "--master-port", "8086", "--http-host", "0.0.0.0", "--http-port", "8089", "--cache-path", "/var/lib/gorse/worker_cache.data"]
+        volumeMounts:
+        - mountPath: /etc/gorse/config.toml
+          name: config-volume
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+      volumes:
+      - name: config-volume
+        configMap:
+          name: gorse-server-config
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east1-c

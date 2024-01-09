@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  selector:
+    matchLabels:
+      app: gorse-worker
+  serviceName: svc
+  template:
+    metadata:
+      labels:
+        app: gorse-worker
+    spec:
+      containers:
+      - name: gorse-worker
+        image: zhenghaoz/gorse-worker
+        ports:
+        - containerPort: 8089
+          name: gorse-worker-http
+        command: ["--master-host", "master", "--master-port", "8086", "--http-host", "0.0.0.0", "--http-port", "8089", "--cache-path", "/var/lib/gorse/worker_cache.data"]
+        volumeMounts:
+        - mountPath: /etc/gorse/config.toml
+          name: config-volume
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+      volumes:
+      - name: config-volume
+        configMap:
+          name: config-config
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - us-east1-c

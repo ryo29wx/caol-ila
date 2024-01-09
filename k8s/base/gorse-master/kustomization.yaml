@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app: gorse-master
+
+namePrefix: gorse-master-
+
+configMapGenerator:
+- name: gorse-master-config
+  files:
+  - config/config.toml
+
+resources:
+- master-stateful.yaml
+- master-service.yaml
+- master-pv.yaml
+- master-pvc.yaml
