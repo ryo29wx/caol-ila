@@ -4,8 +4,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math/rand"
+	"os"
+	"time"
 
 	"github.com/google/uuid"
+)
+
+var (
+	n             *int     = flag.Int("n", 10, "How many jsons which you want to create")
+	testUserNames []string = []string{"Ryo Kiuchi", "木内 量", "Test User", "Hoge Fuga"}
 )
 
 // UserProfile はユーザーのプロファイル情報を表す構造体です。
@@ -43,20 +51,24 @@ type UserProfile struct {
 
 // 550e8400-e29b-41d4-a716-446655440000
 func main() {
-	n := flag.Int("n", 10, "How many jsons which you want to create")
-	// UserProfile構造体のインスタンスを作成し、データを埋めます。
+	flag.Parse()
+
+	rand.Seed(time.Now().UnixNano())
 	var result []UserProfile
 	for i := 0; i < *n; i++ {
+		un := rand.Int()
+		un = un % len(testUserNames)
+
 		profile := UserProfile{
 			UserID:    generateUUID(),
-			UserName:  "山田太郎",
+			UserName:  testUserNames[un],
 			Sex:       1,
 			Age:       20,
 			JobTitle:  "hoge",
 			Company:   "株式会社サンプル",
-			Likes:     []string{"550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"},
-			Dislikes:  []string{"550e8400-e29b-41d4-a716-446655440003", "550e8400-e29b-41d4-a716-446655440004"},
-			Blocks:    []string{"550e8400-e29b-41d4-a716-446655440005", "550e8400-e29b-41d4-a716-446655440006"},
+			Likes:     []string{generateUUID(), generateUUID()},
+			Dislikes:  []string{generateUUID(), generateUUID()},
+			Blocks:    []string{generateUUID(), generateUUID()},
 			MainImage: "http://sample.com/image01",
 			ImagePath: []string{"http://sample.com/image02", "http://sample.com/image03"},
 			RegistDay: "hoge",
@@ -66,15 +78,18 @@ func main() {
 		result = append(result, profile)
 	}
 
-	// JSONにエンコードします。
 	jsonData, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		fmt.Println("Error encoding JSON:", err)
 		return
 	}
 
-	// エンコードしたJSONを出力します。
-	fmt.Println(string(jsonData))
+	err = os.WriteFile("testData.json", jsonData, 0644)
+	if err != nil {
+		fmt.Println("Error writing JSON to file:", err)
+		return
+	}
+
 }
 
 func generateUUID() string {
