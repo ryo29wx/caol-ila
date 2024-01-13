@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -34,6 +36,10 @@ var (
 	logger     *zap.Logger
 	collection *mongo.Collection
 	gorseSvc   string
+)
+
+const (
+	port = ":50052"
 )
 
 /*
@@ -228,6 +234,18 @@ func main() {
 	if gorseSvc == "" {
 		logger.Error("failed to get gorse dns name from os env.")
 		gorseSvc = "localhost:8087"
+	}
+
+	// start application
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		logger.Error("failed to set-up port listen with gRPC.")
+	}
+	grpcserver := grpc.NewServer()
+	pb.RegisterRecommenderServer(grpcserver, &server{})
+	if err := grpcserver.Serve(lis); err != nil {
+		logger.Error("failed to set-up application server.")
+		panic(err)
 	}
 
 	// expose /metrics endpoint for observer(by default Prometheus).
