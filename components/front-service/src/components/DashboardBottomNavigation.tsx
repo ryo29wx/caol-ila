@@ -26,24 +26,7 @@ function DashboardBottomNavigation() {
         setValue(newValue);
       }}
     >
-      <BottomNavigationAction
-        label="Recent"
-        value="recent"
-        icon={<RestoreIcon />}
-        onClick={() => handleIconClick('recent')}
-      />
-      <BottomNavigationAction
-        label="Favorites"
-        value="favorites"
-        icon={<FavoriteIcon />}
-        onClick={() => handleIconClick('favo')}
-      />
-      <BottomNavigationAction
-        label="Nearby"
-        value="nearby"
-        icon={<LocationOnIcon />}
-        onClick={() => handleIconClick('nearby')}
-      />
+      
     </BottomNavigation>
   );
 }

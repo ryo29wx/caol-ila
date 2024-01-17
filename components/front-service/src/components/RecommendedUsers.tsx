@@ -5,7 +5,7 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
-
+import { Button, CardActionArea, CardActions } from '@mui/material';
 
 // ユーザー情報を保持する型を定義します。
 type User = {
@@ -39,6 +39,12 @@ const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [page, setPage] = useState(1); // ページネーションの現在のページ
   
+    const handleUserCardClick = () => {
+      fetch(`/user/${userId}`)
+        .then((response) => response.json())
+        .then((item) => setItem(item));
+    };
+
     useEffect(() => {
       const fetchData = async () => {
         try {
@@ -62,21 +68,23 @@ const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
         <Grid container spacing={3}>
             {users.map((user) => (
                 <Grid item xs={12} sm={6} md={4} key={user.id}>
-                <Card>
-                    <CardMedia
-                    component="img"
-                    height="200"
-                    image={user.imageUrl}
-                    alt={user.title}
-                    />
-                    <CardContent>
-                    <Typography variant="h6" component="div">
-                        {user.name} 
-                        <br></br>
-                        {user.title}
-                    </Typography>
-                    </CardContent>
-                </Card>
+                  <Card>
+                    <CardActionArea>
+                      <CardMedia
+                      component="img"
+                      height="200"
+                      image={user.imageUrl}
+                      alt={user.title}
+                      />
+                      <CardContent>
+                        <Typography variant="h6" component="div">
+                            {user.name} 
+                            <br></br>
+                            {user.title}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
                 </Grid>
             ))}
         </Grid>
