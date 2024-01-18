@@ -6,6 +6,8 @@ import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import { Button, CardActionArea, CardActions } from '@mui/material';
+import { Link } from 'react-router-dom';
+import FavoriteIcon from './RecommendedUserFavoriteIcon';
 
 // ユーザー情報を保持する型を定義します。
 type User = {
@@ -35,16 +37,13 @@ interface RecommendedUsersProps {
     userId: string; // user_idをプロップとして受け取る
 }
 
+
 const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
     const [users, setUsers] = useState<User[]>([]);
+    const [item, setItem] = useState(null);
     const [page, setPage] = useState(1); // ページネーションの現在のページ
-  
-    const handleUserCardClick = () => {
-      fetch(`/user/${userId}`)
-        .then((response) => response.json())
-        .then((item) => setItem(item));
-    };
 
+    
     useEffect(() => {
       const fetchData = async () => {
         try {
@@ -69,7 +68,7 @@ const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
             {users.map((user) => (
                 <Grid item xs={12} sm={6} md={4} key={user.id}>
                   <Card>
-                    <CardActionArea>
+                    <CardActionArea component={Link} to={`/user/detail/${user.id}`} >
                       <CardMedia
                       component="img"
                       height="200"
@@ -84,6 +83,7 @@ const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
                         </Typography>
                       </CardContent>
                     </CardActionArea>
+                    <FavoriteIcon />
                   </Card>
                 </Grid>
             ))}
