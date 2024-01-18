@@ -32,7 +32,7 @@ spec:
       volumes:
       - name: config-volume
         configMap:
-          name: config-config
+          name: gorse-worker-config
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

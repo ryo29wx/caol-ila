@@ -2,9 +2,8 @@ import React from 'react';
 import axios from 'axios';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import RestoreIcon from '@mui/icons-material/Restore';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import InfoIcon from '@mui/icons-material/Info';
+import ContactMailIcon from '@mui/icons-material/ContactMail';
 
 function DashboardBottomNavigation() {
   const [value, setValue] = React.useState(0);
@@ -26,24 +25,9 @@ function DashboardBottomNavigation() {
         setValue(newValue);
       }}
     >
-      <BottomNavigationAction
-        label="Recent"
-        value="recent"
-        icon={<RestoreIcon />}
-        onClick={() => handleIconClick('recent')}
-      />
-      <BottomNavigationAction
-        label="Favorites"
-        value="favorites"
-        icon={<FavoriteIcon />}
-        onClick={() => handleIconClick('favo')}
-      />
-      <BottomNavigationAction
-        label="Nearby"
-        value="nearby"
-        icon={<LocationOnIcon />}
-        onClick={() => handleIconClick('nearby')}
-      />
+      <BottomNavigationAction label="About Us" icon={<InfoIcon />} />
+      <BottomNavigationAction label="Contact Us" icon={<ContactMailIcon />} />
+      
     </BottomNavigation>
   );
 }
