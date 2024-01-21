@@ -1,0 +1,17 @@
+name: Notify
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  notify-slack:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Notify Slack
+      env: 
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull Requestがマージされました: '${GITHUB_REPOSITORY}' # '${github.event.pull_request.number}'"}' $SLACK_WEBHOOK_URL
