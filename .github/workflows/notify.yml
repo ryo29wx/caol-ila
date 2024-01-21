@@ -14,4 +14,4 @@ jobs:
       env: 
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
       run: |
-        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull Requestがマージされました: '${GITHUB_REPOSITORY}' # '${github.event.pull_request.number}'"}' $SLACK_WEBHOOK_URL
+        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull Requestがマージされました: ryo29wx/Caol-Ila # ${github.event.pull_request.number}"}' $SLACK_WEBHOOK_URL
