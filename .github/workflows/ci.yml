@@ -9,17 +9,7 @@ on:
       - main
   workflow_dispatch: {}
 
-jobs:
-  notify-slack:
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
-    steps:
-    - name: Notify Slack
-      env: 
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-      run: |
-        curl -X POST -H 'Content-type: application/json' --data '{"text":"Pull Requestがマージされました: '${GITHUB_REPOSITORY}' # '${github.event.pull_request.number}'"}' $SLACK_WEBHOOK_URL
-        
+jobs:   
   build_search:
     runs-on: ubuntu-22.04
     if: contains(github.event.head_commit.modified, 'components/search/')
@@ -37,5 +27,46 @@ jobs:
     - name: Build
       run: go build -v .
 
-   # - name: Test
-   #  run: go test -v .
+    - name: Build Docker container
+      run: |
+        docker build -t search .
+
+  build_recommend:
+    runs-on: ubuntu-22.04
+    if: contains(github.event.head_commit.modified, 'components/recommend/')
+    defaults:
+      run:
+        working-directory: components/recommend
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.21
+
+    - name: Build
+      run: go build -v .
+
+    - name: Build Docker container
+      run: |
+        docker build -t recommend .
+
+  build_frontend:
+    runs-on: ubuntu-22.04
+    if: contains(github.event.head_commit.modified, 'components/front-service/')
+    defaults:
+      run:
+        working-directory: components/front-service
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16.x'
+
+    - name: Install dependencies
+      run: npm ci
+    - name: Build TypeScript
+      run: npm run build
