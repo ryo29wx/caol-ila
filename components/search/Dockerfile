@@ -20,4 +20,3 @@ RUN apk --no-cache add ca-certificates &&\
     apk add gcompat
 COPY --from=builder  /go/setenv/search .
 CMD ["./search"]
-
