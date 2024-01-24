@@ -14,7 +14,7 @@ on:
 jobs:   
   build_search:
     runs-on: ubuntu-22.04
-    if: contains(github.event.head_commit.modified, 'components/search/')
+    # if: contains(github.event.head_commit.modified, 'components/search/')
     defaults:
       run:
         working-directory: components/search
