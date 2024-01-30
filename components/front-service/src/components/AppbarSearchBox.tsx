@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
@@ -47,17 +47,17 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 function AppbarSearchBox() {
     const [searchTerm, setSearchTerm] = useState('');
 
-    const handleInputChange = (event) => {
+    const handleInputChange = (event: any) => {
       setSearchTerm(event.target.value);
     };
   
-    const handleKeyPress = (event) => {
+    const handleKeyPress = (event: any) => {
       if (event.key === 'Enter') {
         callBackendAPI(searchTerm);
       }
     };
 
-    const callBackendAPI = async (searchTerm) => {
+    const callBackendAPI = async (searchTerm: string) => {
         try {
           const response = await fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`);
           const data = await response.json();

@@ -71,4 +71,4 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Build TypeScript
-      run: npm run dev
+      run: npm run build

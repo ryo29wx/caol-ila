@@ -9,7 +9,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" exact element={<Dashboard />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user/:id" element={<UserDetails />} />
       </Routes>
