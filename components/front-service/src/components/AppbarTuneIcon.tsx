@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -19,7 +19,15 @@ import Box from '@mui/material/Box';
 import TuneSharpIcon from '@mui/icons-material/TuneSharp';
 
 // ダイアログ内のフォームアイテムの初期値を設定
-const defaultFilterValues = {
+
+type FilterValues = {
+  sex: string;
+  jobTitles: string[];
+  liveAt: string;
+  ageGroup: string[];
+};
+
+const defaultFilterValues: FilterValues = {
   sex: '',
   jobTitles: [],
   liveAt: '',
@@ -39,16 +47,17 @@ function AppbarTuneIcon() {
     setOpen(false);
   };
 
-  const handleSexChange = (event) => {
+  const handleSexChange = (event: any) => {
     setFilters({ ...filters, sex: event.target.value });
   };
 
-  const handleJobTitleChange = (event) => {
+  const handleJobTitleChange = (event: any) => {
     const jobTitles = [...filters.jobTitles];
+    const anyJobTitles = [...filters.jobTitles] as any;
     if (event.target.checked) {
-      jobTitles.push(event.target.name);
+      anyJobTitles.push(event.target.name);
     } else {
-      const index = jobTitles.indexOf(event.target.name);
+      const index = anyJobTitles.indexOf();
       if (index > -1) {
         jobTitles.splice(index, 1);
       }
@@ -56,26 +65,26 @@ function AppbarTuneIcon() {
     setFilters({ ...filters, jobTitles: jobTitles });
   };
 
-  const handleLiveAtChange = (event) => {
+  const handleLiveAtChange = (event: any) => {
     setFilters({ ...filters, liveAt: event.target.value });
   };
 
-  const handleAgeGroupChange = (event) => {
+  const handleAgeGroupChange = (event: any) => {
     const ageGroup = [...filters.ageGroup];
+    const anyAgeGroup = [...filters.ageGroup] as any;
     if (event.target.checked) {
-      ageGroup.push(event.target.name);
+      anyAgeGroup.push(event.target.name);
     } else {
-      const index = ageGroup.indexOf(event.target.name);
+      const index = anyAgeGroup.indexOf(event.target.name);
       if (index > -1) {
-        ageGroup.splice(index, 1);
+        anyAgeGroup.splice(index, 1);
       }
     }
     setFilters({ ...filters, ageGroup: ageGroup });
   };
 
-  // 送信処理（実際にはAPIへのリクエストなど）
+
   const handleSubmit = () => {
-    // フィルターを適用する処理
     console.log(filters);
     handleClose();
   };
@@ -93,7 +102,7 @@ function AppbarTuneIcon() {
             >
         <TuneSharpIcon />
       </IconButton>
-      <Dialog open={open} onClose={handleClose} fullWidth="true" maxWidth="md">
+      <Dialog open={open} onClose={handleClose} maxWidth="md">
         <DialogTitle>フィルターする</DialogTitle>
         <DialogContent>
           <Box display="flex" justifyContent="space-around" flex="1 0 auto">

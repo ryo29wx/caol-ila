@@ -4,15 +4,17 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+      - docker**
+      - fix**
+  # pull_request:
+  #  branches:
+  #    - main
   workflow_dispatch: {}
 
 jobs:   
   build_search:
     runs-on: ubuntu-22.04
-    if: contains(github.event.head_commit.modified, 'components/search/')
+    # if: contains(github.event.head_commit.modified, 'components/search/')
     defaults:
       run:
         working-directory: components/search
@@ -33,7 +35,7 @@ jobs:
 
   build_recommend:
     runs-on: ubuntu-22.04
-    if: contains(github.event.head_commit.modified, 'components/recommend/')
+    # if: contains(github.event.head_commit.modified, 'components/recommend/')
     defaults:
       run:
         working-directory: components/recommend
@@ -54,7 +56,7 @@ jobs:
 
   build_frontend:
     runs-on: ubuntu-22.04
-    if: contains(github.event.head_commit.modified, 'components/front-service/')
+    # if: contains(github.event.head_commit.modified, 'components/front-service/')
     defaults:
       run:
         working-directory: components/front-service
