@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
-import { Button, CardActionArea, CardActions } from '@mui/material';
+import { CardActionArea } from '@mui/material';
 import { Link } from 'react-router-dom';
 import FavoriteIcon from './RecommendedUserFavoriteIcon';
 
@@ -32,36 +32,27 @@ const testusers: User[] = [
     { id: '010', name: 'Nick Middle', imageUrl: '/images/TestUser10.jpeg', good: false, title: 'Splunk Service合同会社 TechnicalSuccess'},
 ];
 
-// コンポーネントのプロップの型定義
-interface RecommendedUsersProps {
-    userId: string; // user_idをプロップとして受け取る
-}
-
-
-const RecommendedUsers: React.FC<RecommendedUsersProps> = ({ userId }) => {
+function RecommendedUsers() {
     const [users, setUsers] = useState<User[]>([]);
-    const [item, setItem] = useState(null);
-    const [page, setPage] = useState(1); // ページネーションの現在のページ
+    const [page] = useState(1); // ページネーションの現在のページ
 
     
     useEffect(() => {
       const fetchData = async () => {
         try {
           const response = await axios.post('/service/recousers/', {
-            user_id: userId,
             page: page,
           });
           setUsers(response.data);
         } catch (error) {
           console.error('Error fetching recommended users:', error);
-          // ローカルデバッグ用
-          // 本番では消す
+          // debug for local environment
           setUsers(testusers);
         }
       };
   
       fetchData();
-    }, [userId, page]); // userIdまたはpageが変更されるたびにデータを再取得
+    }, [page]);
   
     return (
         <Grid container spacing={3}>
