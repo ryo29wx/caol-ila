@@ -58,7 +58,7 @@ jobs:
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest"
+        export IMAGE_TAG="${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
 
