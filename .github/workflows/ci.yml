@@ -33,6 +33,36 @@ jobs:
       run: |
         docker build -t search .
 
+  push_search:
+    needs: [build_search]
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: components/search
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v1
+    - name: GCP Authenticate
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Setup GCloud
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        version: '>= 363.0.0'
+
+    - name: Configure docker to use the gcloud cli
+      run: gcloud auth configure-docker --quiet
+
+    - name: Build and push container
+      run: |
+        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest
+        docker build -t $IMAGE_TAG .
+        docker push $IMAGE_TAG
+
+
   build_recommend:
     runs-on: ubuntu-22.04
     # if: contains(github.event.head_commit.modified, 'components/recommend/')
