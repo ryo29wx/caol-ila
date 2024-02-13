@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: components/recommned
+        working-directory: components/recommend
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v1
