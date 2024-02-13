@@ -58,7 +58,7 @@ jobs:
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest"
+        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
 
@@ -84,6 +84,35 @@ jobs:
       run: |
         docker build -t recommend .
 
+  push_recommend:
+    needs: [build_recommend]
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: components/recommned
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v1
+    - name: GCP Authenticate
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Setup GCloud
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        version: '>= 363.0.0'
+
+    - name: Configure docker to use the gcloud cli
+      run: gcloud auth configure-docker --quiet
+
+    - name: Build and push container
+      run: |
+        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/recommned:latest"
+        docker build -t $IMAGE_TAG .
+        docker push $IMAGE_TAG
+
   build_frontend:
     runs-on: ubuntu-22.04
     # if: contains(github.event.head_commit.modified, 'components/front-service/')
@@ -102,3 +131,32 @@ jobs:
       run: npm ci
     - name: Build TypeScript
       run: npm run build
+
+  push_frontend:
+    needs: [build_frontend]
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: components/front-service
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v1
+    - name: GCP Authenticate
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Setup GCloud
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        version: '>= 363.0.0'
+
+    - name: Configure docker to use the gcloud cli
+      run: gcloud auth configure-docker --quiet
+
+    - name: Build and push container
+      run: |
+        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/front-service:latest"
+        docker build -t $IMAGE_TAG .
+        docker push $IMAGE_TAG
