@@ -3,10 +3,16 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,7 +24,8 @@ import (
 )
 
 const (
-	port = ":50051"
+	port           = ":50051"
+	jsonMountPoint = "/opt/etc/users.json"
 )
 
 var (
@@ -109,6 +116,69 @@ func main() {
 
 	defer logger.Sync()
 
+	// set-up MongoDB client
+	mongoHost := os.Getenv("DEV_MONGO_SVC_SERVICE_HOST")
+	mongoPort := os.Getenv("DEV_MONGO_SVC_SERVICE_PORT")
+
+	if mongoHost == "" {
+		logger.Error("does not exist remote mongo host.")
+		mongoHost = "localhost"
+	}
+	if mongoPort == "" {
+		logger.Error("does not exist remote mongo port.")
+		mongoPort = "27017"
+	}
+
+	remoteMongoHost := "mongodb://" + mongoHost + ":" + mongoPort
+	client, err := mongo.NewClient(options.Client().ApplyURI(remoteMongoHost))
+	if err != nil {
+		logger.Error("does not exist remote mongo port.")
+		panic(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Connect(ctx)
+	if err != nil {
+		logger.Error("unexpected error occur when connect to mongo.")
+		panic(err)
+	}
+	defer client.Disconnect(ctx)
+
+	collection := client.Database("product_info").Collection("products")
+
+	ticker := time.NewTicker(300 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				cur, err := collection.Find(context.Background(), bson.D{{}})
+				if err != nil {
+					logger.Error("unexpected error occur when find data from mongodb.")
+				}
+				defer cur.Close(context.Background())
+				var results []bson.M
+
+				if err = cur.All(context.Background(), &results); err != nil {
+					logger.Error("failed to get data from mongo.")
+				}
+
+				jsonData, err := json.Marshal(results)
+				if err != nil {
+					logger.Error("failed to write data to search component.")
+					panic(err)
+				}
+
+				ioutil.WriteFile(jsonMountPoint, jsonData, 0644)
+
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
 	// set-up meilisearch to register products json(documents) to index.
 	meiliclient = meilisearch.NewClient(meilisearch.ClientConfig{
 		// expect meilisearch sidecar container
@@ -119,17 +189,17 @@ func main() {
 	index := meiliclient.Index("users")
 
 	// If the index 'usres' does not exist, Meilisearch creates it when you first add the documents.
-	byteValue, err := os.ReadFile("/opt/etc/users.json")
+	byteValue, err := os.ReadFile(jsonMountPoint)
 	if err != nil {
 		logger.Error("failed to load search json file", zap.Error(err))
 		panic(err)
 	}
 
 	// decode JSON to struct which is defeined this file.
-	var products []*pb.ResponseResult
-	json.Unmarshal(byteValue, &products)
+	var users []*pb.ResponseResult
+	json.Unmarshal(byteValue, &users)
 
-	task, err := index.AddDocuments(products)
+	task, err := index.AddDocuments(users)
 	if err != nil {
 		logger.Error("failed to add document to meilesearch task.", zap.Error(err))
 		panic(err)
