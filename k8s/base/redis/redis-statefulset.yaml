@@ -29,4 +29,4 @@ spec:
               - key: topology.kubernetes.io/zone
                 operator: In
                 values:
-                - us-east1-b
+                - asia-northeast1-a

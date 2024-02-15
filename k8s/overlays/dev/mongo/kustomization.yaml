@@ -5,9 +5,9 @@ namespace: dev-caolila
 namePrefix: dev-
 
 images:
-- name: mongodb
-  newname: gcr.io/_GCP_PROJECT_ID_/mongo
-  newTag: v0.0.1
+- name: mongo
+  # newname: gcr.io/_GCP_PROJECT_ID_/mongo
+  newTag: latest
 replicas:
 - name: statefulset
   count: 2

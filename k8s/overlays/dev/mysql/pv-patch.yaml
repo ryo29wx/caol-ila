@@ -9,5 +9,5 @@ spec:
   accessModes:
     - ReadWriteMany
   gcePersistentDisk:
-    pdName: dev-mysql-disk
+    pdName: dev-caolila-mysql-disk
     fsType: ext4

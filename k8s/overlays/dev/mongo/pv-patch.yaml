@@ -6,5 +6,5 @@ spec:
   capacity:
     storage: 5Gi
   gcePersistentDisk:
-    pdName: dev-mongo-disk
+    pdName: dev-caolila-mongo-disk
     fsType: ext4

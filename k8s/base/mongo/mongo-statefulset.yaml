@@ -7,8 +7,8 @@ spec:
   template:
     spec:
       containers:
-        - image: mongodb
-          name: mongodb
+        - image: mongo
+          name: mongo
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
@@ -22,7 +22,7 @@ spec:
                   key: mongo_init_password
           ports:
             - containerPort: 27017
-              name: mongodb
+              name: mongo
           volumeMounts:
             - name: mongo-data
               mountPath: /data/db
@@ -41,4 +41,4 @@ spec:
               - key: topology.kubernetes.io/zone
                 operator: In
                 values:
-                - us-east1-c
+                - asia-northeast1-b
