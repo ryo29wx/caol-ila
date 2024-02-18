@@ -19,7 +19,7 @@ spec:
             - containerPort: 3306
               name: mysql
           volumeMounts:
-            - name: mysql-data
+            - name: dev-mysql-pvc
               mountPath: /var/lib/mysql
           resources:
             limits:
@@ -36,4 +36,4 @@ spec:
               - key: topology.kubernetes.io/zone
                 operator: In
                 values:
-                - us-east1-b
+                - asia-northeast1-c

@@ -49,7 +49,7 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /meili-data/
-        - name: meili-index
+        - name: dev-search-pvc
           mountPath: /data/index
         # command: ["./meilisearch", "--config-file-path='./config.toml'"]
         command: ["./meilisearch", "--master-key=$MEILISEARCH_MASTERKEY"]
@@ -65,4 +65,4 @@ spec:
               - key: topology.kubernetes.io/zone
                 operator: In
                 values:
-                - us-east1-c
+                - asia-northeast1-c

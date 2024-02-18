@@ -8,10 +8,12 @@ images:
   newTag: "6.2"
 replicas:
 - name: statefulset
-  count: 1
+  count: 2
 
 resources:
 - ../../../base/redis
+- pvc-patch-01.yaml
+- pvc-patch-02.yaml
 
 
 patches:
@@ -29,7 +31,3 @@ patches:
   target:
     kind: PersistentVolume
     name: pv
-- path: pvc-patch.yaml
-  target:
-    kind: PersistentVolumeClaim
-    name: pvc

@@ -19,7 +19,7 @@ spec:
               cpu: 100m
               memory: 100m
           volumeMounts:
-            - name: redis-data
+            - name: dev-redis-pvc
               mountPath: /data
       affinity:
         nodeAffinity:
@@ -29,4 +29,4 @@ spec:
               - key: topology.kubernetes.io/zone
                 operator: In
                 values:
-                - us-east1-b
+                - asia-northeast1-a

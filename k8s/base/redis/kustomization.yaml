@@ -11,4 +11,3 @@ resources:
 - redis-service.yaml
 - redis-secret.yaml
 - redis-pv.yaml
-- redis-pvc.yaml

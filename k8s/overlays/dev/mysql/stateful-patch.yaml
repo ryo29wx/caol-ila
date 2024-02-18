@@ -3,10 +3,11 @@ kind: StatefulSet
 metadata:
   name: statefulset
 spec:
-  template:
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-mysql-pvc
     spec:
-      volumes:
-        - name: mysql-data
-          persistentVolumeClaim:
-            claimName: mysql-pvc
-
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

@@ -3,9 +3,11 @@ kind: StatefulSet
 metadata:
   name: redis
 spec:
-  template:
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-redis-pvc
     spec:
-      volumes:
-        - name: redis-persistent-storage
-          persistentVolumeClaim:
-            claimName: redis-pvc
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

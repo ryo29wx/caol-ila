@@ -5,15 +5,17 @@ namespace: dev-caolila
 namePrefix: dev-
 
 images:
-- name: mongodb
-  newname: gcr.io/_GCP_PROJECT_ID_/mongo
-  newTag: v0.0.1
+- name: mongo
+  # newname: gcr.io/_GCP_PROJECT_ID_/mongo
+  newTag: latest
 replicas:
 - name: statefulset
   count: 2
 
 resources:
 - ../../../base/mongo
+- pvc-patch-01.yaml
+- pvc-patch-02.yaml
 
 patches:
 - path: stateful-patch.yaml
@@ -30,7 +32,11 @@ patches:
   target:
     kind: PersistentVolume
     name: pv
-- path: pvc-patch.yaml
-  target:
-    kind: PersistentVolumeClaim
-    name: pvc
+# - path: pvc-patch-01.yaml
+#   target:
+#     kind: PersistentVolumeClaim
+#     name: pvc
+# - path: pvc-patch-02.yaml
+#   target:
+#     kind: PersistentVolumeClaim
+#     name: pvc

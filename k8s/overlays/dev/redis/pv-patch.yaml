@@ -6,5 +6,5 @@ spec:
   capacity:
     storage: 5Gi
   gcePersistentDisk:
-    pdName: dev-redis-disk
+    pdName: dev-caolila-redis-disk
     fsType: ext4

@@ -5,4 +5,4 @@ metadata:
 spec:
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
