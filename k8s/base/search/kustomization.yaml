@@ -16,4 +16,3 @@ resources:
 - search-service.yaml
 - search-secret.yaml
 - search-pv.yaml
-- search-pvc.yaml

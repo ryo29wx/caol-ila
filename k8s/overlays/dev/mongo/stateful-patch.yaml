@@ -3,9 +3,17 @@ kind: StatefulSet
 metadata:
   name: statefulset
 spec:
-  template:
+  # template:
+  #   spec:
+  #     volumes:
+  #       - name: mongo-data
+  #         persistentVolumeClaim:
+  #           claimName: mongo-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-mongo-pvc
     spec:
-      volumes:
-        - name: mongo-data
-          persistentVolumeClaim:
-            claimName: mongo-pvc
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

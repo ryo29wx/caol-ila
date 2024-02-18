@@ -17,6 +17,8 @@ replicas:
 
 resources:
 - ../../../base/search
+- pvc-patch-01.yaml
+- pvc-patch-02.yaml
 
 patches:
 - path: stateful-patch.yaml
@@ -34,7 +36,3 @@ patches:
   target:
     kind: PersistentVolume
     name: pv
-- path: pvc-patch.yaml
-  target:
-    kind: PersistentVolumeClaim
-    name: pvc

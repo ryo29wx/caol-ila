@@ -24,7 +24,7 @@ spec:
             - containerPort: 27017
               name: mongo
           volumeMounts:
-            - name: mongo-data
+            - name: dev-mongo-pvc
               mountPath: /data/db
           resources:
             limits:
