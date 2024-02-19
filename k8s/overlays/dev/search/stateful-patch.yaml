@@ -17,12 +17,12 @@ spec:
           valueFrom:
             secretKeyRef:
               key: DEV_MONGO_SVC_SERVICE_HOST
-              name: dev-mongo-svc.dev-caolila.svc.cluster.local
+              name: dev-search-secret
         - name: DEV_MONGO_SVC_SERVICE_PORT
           valueFrom:
             secretKeyRef:
               key: DEV_MONGO_SVC_SERVICE_PORT
-              name: "27017"
+              name: dev-search-secret
   volumeClaimTemplates:
   - metadata:
       name: dev-search-pvc
