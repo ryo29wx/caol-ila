@@ -6,7 +6,7 @@ namespace: dev-caolila
 
 images:
 - name: search
-  newname: gcr.io/planar-courage-414205/search
+  newname: gcr.io/planar-courage-414205/caolila/search
   newTag: latest
 - name: getmeili/meilisearch
   # newname: gcr.io/planar-courage-414205/meilisearch
