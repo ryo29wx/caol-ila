@@ -163,23 +163,23 @@ func main() {
 	// TODO
 	cur, err := collection.Find(context.Background(), bson.D{{}})
 	if err != nil {
-		logger.Error("0: unexpected error occur when find data from mongodb.")
+		logger.Error("0: unexpected error occur when find data from mongodb.", zap.Error(err))
 	}
 	defer cur.Close(context.Background())
 	var results []bson.M
 
 	if err = cur.All(context.Background(), &results); err != nil {
-		logger.Error("0: failed to get data from mongo.")
+		logger.Error("0: failed to get data from mongo.", zap.Error(err))
 	}
 
 	jsonData, err := json.Marshal(results)
 	if err != nil {
-		logger.Error("0: failed to write data to search component.")
+		logger.Error("0: failed to write data to search component.", zap.Error(err))
 	}
 
 	err = os.WriteFile(jsonMountPoint, jsonData, 0644)
 	if err != nil {
-		logger.Error("0: failed to write json data to ")
+		logger.Error("0: failed to write json data to ", zap.Error(err))
 	}
 	// TODO END
 

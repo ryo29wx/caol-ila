@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+spec:
+  template:
+    spec:
+      containers:
+        - image: front
+          name: front
+          ports:
+            - containerPort: 80
+              name: main
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500m
+            requests:
+              cpu: 100m
+              memory: 100m

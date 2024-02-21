@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+spec:
+  template:
+    spec:
+      containers:
+        - name: front
+          env:
+            - name: TEMP_ENV_01
+              valueFrom:
+                secretKeyRef:
+                  name: front-secret
+                  key: temp_env_01
+            - name: TEMP_ENV_02
+              valueFrom:
+                secretKeyRef:
+                  name: front-secret
+                  key: temp_env_01
