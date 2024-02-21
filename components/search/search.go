@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -117,8 +116,8 @@ func main() {
 	defer logger.Sync()
 
 	// set-up MongoDB client
-	mongoHost := os.Getenv("DEV_MONGO_SVC_SERVICE_HOST")
-	mongoPort := os.Getenv("DEV_MONGO_SVC_SERVICE_PORT")
+	mongoHost := os.Getenv("MONGO_SVC_SERVICE_HOST")
+	mongoPort := os.Getenv("MONGO_SVC_SERVICE_PORT")
 
 	if mongoHost == "" {
 		logger.Error("does not exist remote mongo host.")
@@ -145,9 +144,45 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
-	collection := client.Database("product_info").Collection("products")
+	mongoUserDb := os.Getenv("MONGO_USER_DB_NAME")
+	mongoUserCollection := os.Getenv("MONGO_USER_COLLECTION_NAME")
+	if mongoHost == "" {
+		logger.Error("does not exist MONGO_USER_DB_NAME.")
+		mongoUserDb = "user_info"
+	}
+	if mongoPort == "" {
+		logger.Error("does not exist MONGO_USER_COLLECTION_NAME.")
+		mongoUserCollection = "users"
+	}
+
+	logger.Debug("mongo user db: " + mongoUserDb + "mongo user collection: " + mongoUserCollection)
+	collection := client.Database(mongoUserDb).Collection(mongoUserCollection)
 
 	ticker := time.NewTicker(300 * time.Second)
+
+	// TODO
+	cur, err := collection.Find(context.Background(), bson.D{{}})
+	if err != nil {
+		logger.Error("0: unexpected error occur when find data from mongodb.")
+	}
+	defer cur.Close(context.Background())
+	var results []bson.M
+
+	if err = cur.All(context.Background(), &results); err != nil {
+		logger.Error("0: failed to get data from mongo.")
+	}
+
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		logger.Error("0: failed to write data to search component.")
+	}
+
+	err = os.WriteFile(jsonMountPoint, jsonData, 0644)
+	if err != nil {
+		logger.Error("0: failed to write json data to ")
+	}
+	// TODO END
+
 	quit := make(chan struct{})
 	go func() {
 		for {
@@ -167,10 +202,12 @@ func main() {
 				jsonData, err := json.Marshal(results)
 				if err != nil {
 					logger.Error("failed to write data to search component.")
-					panic(err)
 				}
 
-				ioutil.WriteFile(jsonMountPoint, jsonData, 0644)
+				err = os.WriteFile(jsonMountPoint, jsonData, 0644)
+				if err != nil {
+					logger.Error("failed to write json data to ")
+				}
 
 			case <-quit:
 				ticker.Stop()
