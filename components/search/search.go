@@ -118,6 +118,8 @@ func main() {
 	// set-up MongoDB client
 	mongoHost := os.Getenv("MONGO_SVC_SERVICE_HOST")
 	mongoPort := os.Getenv("MONGO_SVC_SERVICE_PORT")
+	mongoPass := os.Getenv(MONGO_INITDB_ROOT_PASSWORD)
+	mongoUser := os.Getenv(MONGO_INITDB_ROOT_USERNAME)
 
 	if mongoHost == "" {
 		logger.Error("does not exist remote mongo host.")
@@ -127,8 +129,16 @@ func main() {
 		logger.Error("does not exist remote mongo port.")
 		mongoPort = "27017"
 	}
+	if mongoPass == "" {
+		logger.Error("does not exist remote mongo password.")
+		mongoPass = "bar"
+	}
+	if mongoUser == "" {
+		logger.Error("does not exist remote mongo username.")
+		mongoUser = "bar"
+	}
 
-	remoteMongoHost := "mongodb://" + mongoHost + ":" + mongoPort
+	remoteMongoHost := "mongodb://" + mongoUser + ":" + mongoPass + "@" + mongoHost + ":" + mongoPort
 	client, err := mongo.NewClient(options.Client().ApplyURI(remoteMongoHost))
 	if err != nil {
 		logger.Error("does not exist remote mongo port.")
