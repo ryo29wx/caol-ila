@@ -27,6 +27,16 @@ spec:
             secretKeyRef:
               name: search-secret
               key: masterkey
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: search-secret
+              key: mongo_init_username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: search-secret
+              key: mongo_init_password
         resources:
           limits:
             cpu: 200m
