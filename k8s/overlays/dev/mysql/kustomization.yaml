@@ -13,8 +13,6 @@ replicas:
 
 resources:
 - ../../../base/mysql
-- pvc-patch-01.yaml
-- pvc-patch-02.yaml
 
 patches:
 - path: stateful-patch.yaml
