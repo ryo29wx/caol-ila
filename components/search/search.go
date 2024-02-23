@@ -24,7 +24,7 @@ import (
 
 const (
 	port           = ":50051"
-	jsonMountPoint = "/opt/etc/users.json"
+	jsonMountPoint = "/data/index/users.json"
 )
 
 var (
