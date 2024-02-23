@@ -187,6 +187,13 @@ func main() {
 		logger.Error("0: failed to write data to search component.", zap.Error(err))
 	}
 
+	if _, err := os.Stat("/data/index"); os.IsNotExist(err) {
+		if err := os.MkdirAll("/data/index", 0755); err != nil {
+			logger.Error("0: failed to create data path ", zap.Error(err))
+			return
+		}
+	}
+
 	err = os.WriteFile(jsonMountPoint, jsonData, 0644)
 	if err != nil {
 		logger.Error("0: failed to write json data to ", zap.Error(err))
