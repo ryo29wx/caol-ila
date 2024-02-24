@@ -23,6 +23,11 @@ spec:
             secretKeyRef:
               key: DEV_MONGO_SVC_SERVICE_PORT
               name: dev-search-secret
+        - name: MEILI_SVC
+          valueFrom:
+            secretKeyRef:
+              key: DEV_MEILI_SVC
+              name: dev-search-secret
         - name: MONGO_USER_DB_NAME
           value: "user_info"
         - name: MONGO_USER_COLLECTION_NAME

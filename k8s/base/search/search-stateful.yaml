@@ -44,11 +44,20 @@ spec:
           requests:
             cpu: 100m
             memory: 100m
+        volumeMounts:
+        - name: dev-search-pvc
+          mountPath: /data/index
       - name: meilisearch
         image: getmeili/meilisearch
         ports:
         - containerPort: 7700
           name: meilisearch
+        env:
+        - name: MEILISEARCH_MASTERKEY
+          valueFrom:
+            secretKeyRef:
+              name: search-secret
+              key: masterkey
         resources:
           limits:
             cpu: 1000m
@@ -60,9 +69,8 @@ spec:
         - name: config-volume
           mountPath: /meili-data/
         - name: dev-search-pvc
-          mountPath: /data/index
-        # command: ["./meilisearch", "--config-file-path='./config.toml'"]
-        command: ["./meilisearch", "--master-key=$MEILISEARCH_MASTERKEY"]
+          mountPath: /meili_data
+        command: ["/meilisearch", "--master-key=master_key"]
       volumes:
       - name: config-volume
         configMap:
