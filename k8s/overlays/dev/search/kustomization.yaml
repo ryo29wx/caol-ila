@@ -8,12 +8,9 @@ images:
 - name: search
   newname: gcr.io/planar-courage-414205/caolila/search
   newTag: latest
-- name: getmeili/meilisearch
-  # newname: gcr.io/planar-courage-414205/meilisearch
-  newTag: latest
 replicas:
 - name: statefulset
-  count: 2
+  count: 1
 
 resources:
 - ../../../base/search
@@ -30,7 +27,3 @@ patches:
     version: v1
     kind: Secret
     name: secret
-# - path: pv-patch.yaml
-#   target:
-#     kind: PersistentVolume
-#     name: pv
