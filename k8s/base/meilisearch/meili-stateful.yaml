@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  selector:
+    matchLabels:
+      app: meili
+  serviceName: svc
+  template:
+    metadata:
+      labels:
+        app: meili
+    spec:
+      containers:
+      - name: meilisearch
+        image: getmeili/meilisearch
+        ports:
+        - containerPort: 7700
+          name: meilisearch
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+        volumeMounts:
+        - name: config-volume
+          mountPath: /meili-data/
+        - name: dev-meili-pvc
+          mountPath: /meili_data
+        command: ["/meilisearch", "--master-key=master_key"]
+      volumes:
+      - name: config-volume
+        configMap:
+          name: meili-config
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - asia-northeast1-c

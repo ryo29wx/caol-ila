@@ -234,9 +234,15 @@ func main() {
 	}()
 
 	// set-up meilisearch to register products json(documents) to index.
+	meiliBackend := os.Getenv("MEILI_SVC")
+	if mongoHost == "" {
+		logger.Error("does not exist MEILI_SVC.")
+		meiliBackend = "127.0.0.1"
+	}
+
 	meiliclient = meilisearch.NewClient(meilisearch.ClientConfig{
 		// expect meilisearch sidecar container
-		Host:   "http://127.0.0.1:7700",
+		Host:   "http://" + meiliBackend + ":7700",
 		APIKey: os.Getenv("MEILISEARCH_MASTERKEY"),
 	})
 

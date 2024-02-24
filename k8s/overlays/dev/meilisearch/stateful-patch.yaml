@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset
+spec:
+  template:
+    spec:
+      containers:
+      - name: meilisearch
+        env:
+        - name: MEILISEARCH_MASTERKEY
+          valueFrom:
+            secretKeyRef:
+              key: masterkey
+              name: meili-secret
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-meili-pvc
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

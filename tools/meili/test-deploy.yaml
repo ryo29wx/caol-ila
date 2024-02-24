@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: test-meili
+  name: test-meili-statefulset
+  namespace: dev-caolila
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-meili
+  serviceName: dev-search-svc
+  template:
+    metadata:
+      labels:
+        app: test-meili
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values:
+                - asia-northeast1-c
+      containers:
+      - command:
+        - /meilisearch
+        - --master-key='master_key'
+        image: getmeili/meilisearch:latest
+        name: meilisearch
+        ports:
+        - containerPort: 7700
+          name: meilisearch
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1000m
+          requests:
+            cpu: 100m
+            memory: 100m
+        volumeMounts:
+        - name: dev-search-pvc
+          mountPath: /meili_data
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-search-pvc
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
