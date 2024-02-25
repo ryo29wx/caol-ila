@@ -4,7 +4,7 @@ metadata:
   name: svc
 spec:
   selector:
-    app.kubernetes.io/name: front
+    app: front
   ports:
   - name: main-port
     protocol: TCP
