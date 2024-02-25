@@ -6,15 +6,27 @@ spec:
   template:
     spec:
       containers:
-        - name: front
-          env:
-            - name: TEMP_ENV_01
-              valueFrom:
-                secretKeyRef:
-                  name: front-secret
-                  key: temp_env_01
-            - name: TEMP_ENV_02
-              valueFrom:
-                secretKeyRef:
-                  name: front-secret
-                  key: temp_env_01
+      - name: front
+        env:
+          - name: TEMP_ENV_01
+            valueFrom:
+              secretKeyRef:
+                name: front-secret
+                key: temp_env_01
+          - name: TEMP_ENV_02
+            valueFrom:
+              secretKeyRef:
+                name: front-secret
+                key: temp_env_01
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          failureThreshold: 30
