@@ -47,10 +47,6 @@ spec:
         volumeMounts:
         - name: dev-search-pvc
           mountPath: /data/index
-      volumes:
-      - name: config-volume
-        configMap:
-          name: meili-config
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

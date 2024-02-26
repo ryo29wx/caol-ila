@@ -16,28 +16,28 @@ interface UserDetailProps {
 const UserDetail: React.FC<UserDetailProps> = ({ userId }) => {
     const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
-    // ユーザー詳細をフェッチする関数
-    const fetchUserDetails = async (id: number) => {
-        // ここでAPIからユーザー詳細をフェッチします
-        // 例: const response = await fetch(`/api/users/${id}`);
-        // setUserDetails(await response.json());
-        
-        // この例ではダミーデータを使用
-        setUserDetails({
-            id,
-            name: 'Sample User',
-            photoUrl: 'path_to_photo',
-            bio: 'Sample bio text.',
-            // 他のフィールド...
-        });
-    };
-
     useEffect(() => {
-        fetchUserDetails(userId);
-    }, [userId]);
+        const fetchUserData = async () => {
+          try {
+            const response = await fetch(`/v1/service/userdetail/${userId}`);
+            if (response.ok) {
+              const userDetail = await response.json();
+              setUserDetails(userDetail);
+            } else {
+              console.error('Failed to fetch user data');
+            }
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            
+          }
+        };
+    
+        fetchUserData();
+    
+      }, [userId]);
 
     if (!userDetails) {
-        return <div>Loading...</div>;
+        return <div>Something wrong...</div>;
     }
 
     return (

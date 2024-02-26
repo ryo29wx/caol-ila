@@ -7,7 +7,7 @@ const UserDetailsPage: React.FC = () => {
 
     return (
         <div className="user-details-page">
-            <h2>User Details Page</h2>
+            <h2>User Detail</h2>
             <UserDetail userId={Number(userId)} />
         </div>
     );
