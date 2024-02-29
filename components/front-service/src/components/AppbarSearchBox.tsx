@@ -59,9 +59,9 @@ function AppbarSearchBox() {
 
     const callBackendAPI = async (searchTerm: string) => {
         try {
-          const response = await fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`);
+          const response = await fetch(`http://dev-mongo-svc.dev-caolila.svc.cluster.local:50051/v1/service/search?q=${encodeURIComponent(searchTerm)}`);
           const data = await response.json();
-          console.log(data); // 
+          console.log(data);
         } catch (error) {
           console.error('Error calling backend API:', error);
         }
