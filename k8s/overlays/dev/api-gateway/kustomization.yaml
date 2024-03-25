@@ -5,22 +5,22 @@ namespace: dev-caolila
 namePrefix: dev-
 
 images:
-- name: mysql
+- name: kong
   newTag: latest
 replicas:
-- name: statefulset
+- name: deploy
   count: 2
 
 resources:
-- ../../../base/mysql
+- ../../../base/api-gateway
 
 patches:
-- path: stateful-patch.yaml
+- path: deploy-patch.yaml
   target:
     group: apps
     version: v1
-    kind: StatefulSet
-    name: statefulset
+    kind: Deployment
+    name: deploy
 - path: secret-patch.yaml
   target:
     kind: Secret

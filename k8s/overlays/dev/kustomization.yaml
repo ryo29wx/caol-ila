@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - namespace-observer.yaml
+- meilisearch
 - search
 - mongo
 - redis

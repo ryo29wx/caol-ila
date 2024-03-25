@@ -14,7 +14,24 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: mysql-secret
-                  key: db_pass
+                  key: MYSQL_ROOT_PW
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PW
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "yes"
           ports:
             - containerPort: 3306
               name: mysql

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+spec:
+  template:
+    spec:
+      containers:
+        - image: kong
+          name: kong
+          ports:
+          - containerPort: 8000  # HTTP Proxy
+          - containerPort: 8443  # HTTPS Proxy
+          - containerPort: 8001  # Admin API Port
+          - containerPort: 8444  # Admin API HTTPS Port
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500m
+            requests:
+              cpu: 100m
+              memory: 100m
