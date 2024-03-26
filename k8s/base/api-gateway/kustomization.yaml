@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app: kong
+namePrefix: api-gw-
+
+resources:
+- kong-deploy.yaml
+- kong-service.yaml
+- kong-secret.yaml
