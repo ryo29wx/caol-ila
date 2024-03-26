@@ -11,6 +11,11 @@ replicas:
 - name: statefulset
   count: 2
 
+configMapGenerator:
+- name: mysql-initializer
+  files:
+    - config/create_new.sql
+
 resources:
 - ../../../base/mysql
 
