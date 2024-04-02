@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -64,20 +63,20 @@ type UserData struct {
 //
 // Implement SearchItemServer using protocol buffer
 // func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
-func searchHandler(c *gin.Context) (UserData, error) {
+func searchHandler(c *gin.Context) {
 
 	query := c.Query("q")
 	page := c.Query("p")
 	token := c.Query("t")
 
-	var userData UserData
 	if query == "" || token == "" || page == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query and Token parameters are required"})
-		return userData, errors.New("missing argument of search query")
+		logger.Error("Search Query parameter is missing.")
+		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
+		return
 	}
 
 	// logging request log
-	logger.Debug("Request log", zap.String("query", query), zap.Int32("page", page), zap.String("token", token))
+	logger.Debug("Request log", zap.String("query", query), zap.String("page", page), zap.String("token", token))
 
 	// increment counter
 	searchReqCount.Inc()
@@ -88,25 +87,26 @@ func searchHandler(c *gin.Context) (UserData, error) {
 		})
 	if err != nil {
 		logger.Error("failed to search in some reasons.", zap.Error(err))
-		return userData, err
+		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
+		return
 	}
 
 	var users []User
 	for _, val := range searchRes.Hits {
-		if s, ok := val.(*User); ok {
+		if s, ok := val.(User); ok {
 			users = append(users, s)
 		} else {
 			logger.Error("Value is not of type pb.ResponseResult")
 		}
 	}
 
-	userData.Users = users
-	userData.Total = 1
-
 	// increment counter
 	searchResCount.Inc()
 
-	return userData, nil
+	c.JSON(http.StatusOK, gin.H{
+		"users": users,
+		"total": page,
+	})
 }
 
 func main() {
@@ -276,7 +276,7 @@ func main() {
 	}
 
 	// decode JSON to struct which is defeined this file.
-	var users []*pb.ResponseResult
+	var users []User
 	json.Unmarshal(byteValue, &users)
 
 	task, err := index.AddDocuments(users)
