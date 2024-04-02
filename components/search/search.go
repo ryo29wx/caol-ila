@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"time"
@@ -13,13 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/gin-gonic/gin"
 	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	pb "github.com/ryo29wx/caolila_interfaces/search"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -42,8 +40,19 @@ var (
 	meiliclient *meilisearch.Client
 )
 
-type server struct {
-	pb.UnimplementedSearcherServer
+type User struct {
+	UserID   int    `json:"user_id"`
+	NickName string `json:"nick_name"`
+	Sex      string `json:"sex"`
+	Title    string `json:"title"`
+	Company  string `json:"company"`
+	Like     int    `json:"like"`
+	ImageURL string `json:"image_url"`
+}
+
+type UserData struct {
+	Users []User `json:"users"`
+	Total int    `json:"total"`
 }
 
 //	message SearchRequest {
@@ -53,18 +62,24 @@ type server struct {
 //	 }
 //
 // Implement SearchItemServer using protocol buffer
-func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+// func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+func searchHandler(c *gin.Context) {
 
-	query := req.GetQuery()
-	sortCondition := req.GetSort()
-	token := req.GetToken()
+	query := c.Query("q")
+	page := c.Query("p")
+	token := c.Query("t")
+
+	if query == "" || token == "" || page == "" {
+		logger.Error("Search Query parameter is missing.")
+		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
+		return
+	}
 
 	// logging request log
-	logger.Debug("Request log", zap.String("query", query), zap.Int32("sort", sortCondition), zap.String("token", token))
+	logger.Debug("Request log", zap.String("query", query), zap.String("page", page), zap.String("token", token))
 
 	// increment counter
 	searchReqCount.Inc()
-	responses := make([]*pb.ResponseResult, 0)
 
 	searchRes, err := meiliclient.Index("users").Search(query,
 		&meilisearch.SearchRequest{
@@ -72,12 +87,14 @@ func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchR
 		})
 	if err != nil {
 		logger.Error("failed to search in some reasons.", zap.Error(err))
-		return &pb.SearchResponse{TotalNum: 0, Responses: responses}, err
+		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
+		return
 	}
 
+	var users []User
 	for _, val := range searchRes.Hits {
-		if s, ok := val.(*pb.ResponseResult); ok {
-			responses = append(responses, s)
+		if s, ok := val.(User); ok {
+			users = append(users, s)
 		} else {
 			logger.Error("Value is not of type pb.ResponseResult")
 		}
@@ -86,7 +103,10 @@ func (s *server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchR
 	// increment counter
 	searchResCount.Inc()
 
-	return &pb.SearchResponse{TotalNum: int32(len(responses)), Responses: responses}, nil
+	c.JSON(http.StatusOK, gin.H{
+		"users": users,
+		"total": page,
+	})
 }
 
 func main() {
@@ -256,7 +276,7 @@ func main() {
 	}
 
 	// decode JSON to struct which is defeined this file.
-	var users []*pb.ResponseResult
+	var users []User
 	json.Unmarshal(byteValue, &users)
 
 	task, err := index.AddDocuments(users)
@@ -271,16 +291,20 @@ func main() {
 	go exportMetrics()
 
 	// start application
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		logger.Error("failed to set-up port listen with gRPC.")
-	}
-	grpcserver := grpc.NewServer()
-	pb.RegisterSearcherServer(grpcserver, &server{})
-	if err := grpcserver.Serve(lis); err != nil {
-		logger.Error("failed to set-up application server.")
-		panic(err)
-	}
+	// lis, err := net.Listen("tcp", port)
+	// if err != nil {
+	// 	logger.Error("failed to set-up port listen with gRPC.")
+	// }
+	// grpcserver := grpc.NewServer()
+	// pb.RegisterSearcherServer(grpcserver, &server{})
+	// if err := grpcserver.Serve(lis); err != nil {
+	// 	logger.Error("failed to set-up application server.")
+	// 	panic(err)
+	// }
+	router := gin.Default()
+	router.GET("v1/search", searchHandler)
+	router.Run(port)
+
 }
 
 // for goroutin
