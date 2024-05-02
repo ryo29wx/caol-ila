@@ -7,7 +7,7 @@ Named after a brand of scotch.
 
 ## Concepts
 
-TBW
+Everyone can build match-app by using this.
 
 ## How to use
 1. fork and clone to your local this repository.
