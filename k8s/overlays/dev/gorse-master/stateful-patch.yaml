@@ -2,10 +2,20 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: statefulset
+
 spec:
   template:
     spec:
-      volumes:
-        - name: gorse-master-data
-          persistentVolumeClaim:
-            claimName: gorse-master-pvc
+      containers:
+      - name: gorse-master
+        volumeMounts:         
+        - name: dev-caolila-master-pvc
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-caolila-master-pvc
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

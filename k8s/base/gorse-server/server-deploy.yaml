@@ -32,12 +32,3 @@ spec:
       - name: config-volume
         configMap:
           name: gorse-server-config
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: In
-                values:
-                - us-east1-c
