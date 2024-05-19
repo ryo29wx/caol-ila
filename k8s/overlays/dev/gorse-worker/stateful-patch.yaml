@@ -5,7 +5,16 @@ metadata:
 spec:
   template:
     spec:
-      volumes:
-        - name: gorse-worker-data
-          persistentVolumeClaim:
-            claimName: gorse-worker-pvc
+      containers:
+      - name: gorse-worker
+        volumeMounts:         
+        - name: dev-caolila-worker-pvc
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-caolila-worker-pvc
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

@@ -14,5 +14,3 @@ configMapGenerator:
 resources:
 - server-deploy.yaml
 - server-service.yaml
-- server-pv.yaml
-- server-pvc.yaml

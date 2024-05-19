@@ -14,5 +14,3 @@ configMapGenerator:
 resources:
 - worker-stateful.yaml
 - worker-service.yaml
-- worker-pv.yaml
-- worker-pvc.yaml

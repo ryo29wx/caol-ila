@@ -5,7 +5,16 @@ metadata:
 spec:
   template:
     spec:
-      volumes:
-        - name: gorse-server-data
-          persistentVolumeClaim:
-            claimName: gorse-server-pvc
+      containers:
+      - name: gorse-server
+        volumeMounts:         
+        - name: dev-caolila-server-pvc
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-caolila-server-pvc
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

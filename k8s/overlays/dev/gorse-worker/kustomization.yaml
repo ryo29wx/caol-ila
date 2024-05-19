@@ -22,11 +22,3 @@ patches:
     version: v1
     kind: StatefulSet
     name: statefulset
-- path: pv-patch.yaml
-  target:
-    kind: PersistentVolume
-    name: pv
-- path: pvc-patch.yaml
-  target:
-    kind: PersistentVolumeClaim
-    name: pvc

@@ -14,5 +14,3 @@ configMapGenerator:
 resources:
 - master-stateful.yaml
 - master-service.yaml
-- master-pv.yaml
-- master-pvc.yaml
