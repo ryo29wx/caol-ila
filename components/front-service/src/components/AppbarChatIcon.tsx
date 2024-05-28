@@ -2,7 +2,7 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import ChatIcon from '@mui/icons-material/Chat';
 
-function AppbarFavoriteIcon() {
+function AppbarChatIcon() {
   return (
     <div>
       <IconButton size="large" aria-label="show 4 new mails" color="inherit">
@@ -14,4 +14,4 @@ function AppbarFavoriteIcon() {
   );
 }
 
-export default AppbarFavoriteIcon;
+export default AppbarChatIcon;
