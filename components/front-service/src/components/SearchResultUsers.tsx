@@ -23,7 +23,7 @@ interface SearchApiResponse {
   total: number;
 }
 
-function RecommendedUsers() {
+function SearchResultUsers() {
     const [users, setUsers] = useState<User[]>([]);
     const [page] = useState(1); // ページネーションの現在のページ
     // const apiUrl = process.env.REACT_APP_SEARCH_API;
@@ -39,6 +39,7 @@ function RecommendedUsers() {
             }
           });
           const data: SearchApiResponse = await response.json();
+          console.log(data);
           setUsers(data.users);
         } catch (error) {
           console.error('Error fetching recommended users:', error);
@@ -77,5 +78,5 @@ function RecommendedUsers() {
 };
   
 
-export default RecommendedUsers;
+export default SearchResultUsers;
 

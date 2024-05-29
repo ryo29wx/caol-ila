@@ -1,12 +1,12 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
-import AccountCircle from '@mui/icons-material/AccountCircle';
+import AppbarUserIcon from './AppbarUserIcon';
 import AppbarTuneIcon from './AppbarTuneIcon';
 import AppbarFavoriteIcon from './AppbarFavoriteIcon';
 import AppbarNotificationIcon from './AppbarNotificationIcon';
@@ -20,6 +20,11 @@ export default function PrimarySearchAppBar() {
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+  const navigate = useNavigate();
+
+  const handleClickSiteName = () => {
+    navigate('/');
+  };
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -85,15 +90,7 @@ export default function PrimarySearchAppBar() {
         <p>Notifications</p>
       </MenuItem>
       <MenuItem onClick={handleProfileMenuOpen}>
-        <IconButton
-          size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
-          color="inherit"
-        >
-          <AccountCircle />
-        </IconButton>
+          <AppbarUserIcon />
         <p>Profile</p>
       </MenuItem>
     </Menu>
@@ -108,6 +105,8 @@ export default function PrimarySearchAppBar() {
             noWrap
             component="div"
             sx={{ display: { xs: 'none', sm: 'block' } }}
+            onClick={handleClickSiteName}
+            style={{ cursor: 'pointer' }}
           >
             Caol-Ila
           </Typography>
@@ -118,17 +117,7 @@ export default function PrimarySearchAppBar() {
             <AppbarFavoriteIcon />
             <AppbarChatIcon />
             <AppbarNotificationIcon />
-            <IconButton
-              size="large"
-              edge="end"
-              aria-label="account of current user"
-              aria-controls={menuId}
-              aria-haspopup="true"
-              onClick={handleProfileMenuOpen}
-              color="inherit"
-            >
-              <AccountCircle />
-            </IconButton>
+            <AppbarUserIcon />
           </Box>
         </Toolbar>
       </AppBar>

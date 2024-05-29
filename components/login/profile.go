@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/gin-gonic/gin"
-	meilisearch "github.com/meilisearch/meilisearch-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -25,13 +24,13 @@ const (
 )
 
 var (
-	getMyAccountReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "getmyaccount_request",
+	getMyProfileReqCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "getmyprofile_request",
 		Help: "Total number of requests that have come to getmyaccount query",
 	})
 
-	getMyAccountResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "getmyaccount_response",
+	getMyProfileResCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "getmyprofile_response",
 		Help: "Total number of response that send from getmyaccount query",
 	})
 
@@ -61,16 +60,16 @@ func getMyProfile(c *gin.Context) {
 	id := c.Query("u")
 
 	if id == "" {
-		logger.Error("User ID is missing when getting user data from SQL.")
+		logger.Error("User ID is missing when getting user data from NoSQL.")
 		c.JSON(http.StatusNoContent, gin.H{"message": "hoge"})
 		return
 	}
 
 	// logging request log
-	logger.Debug("[getMyAccount] Request log", zap.String("user_id", id))
+	logger.Debug("[getMyProfile] Request log", zap.String("user_id", id))
 
 	// increment counter
-	getMyAccountReqCount.Inc()
+	getMyProfileReqCount.Inc()
 
 	var users []User
 	for _, val := range searchRes.Hits {

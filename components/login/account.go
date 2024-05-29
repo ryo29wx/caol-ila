@@ -481,6 +481,7 @@ func main() {
 		pgSsl = "disable"
 	}
 	connStr := "host=" + pgHost + " port=" + pgPort + " user=" + pgInitUser + " password=" + pgInitPass + " dbname=" + pgCaolilaDB + " sslmode=" + pgSsl
+	logger.Debug("Postgre connection:", connStr)
 
 	// データベースへの接続を開く
 	db, err = sql.Open("postgres", connStr)

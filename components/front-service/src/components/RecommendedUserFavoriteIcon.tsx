@@ -9,6 +9,7 @@ function AddShoppingCartIcon() {
 
   const handleIconClick = () => {
     setIsFavorite(!isFavorite);
+    
   };
 
   return (
