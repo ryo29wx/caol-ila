@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import RecommendedUsers from '../components/RecommendedUsers';
+import SearchResultUsers from '../components/SearchResultUsers';
 import DashboardBottomNavigation from '../components/DashboardBottomNavigation';
 import Appbar from '../components/Appbar';
 import BelowAppbarSpace from '../components/BelowAppbarSpace';
@@ -9,7 +9,7 @@ const Dashboard: FC = () => {
     <div>
       <Appbar />
       <BelowAppbarSpace />
-      <RecommendedUsers />
+      <SearchResultUsers />
       <DashboardBottomNavigation />
     </div>
   );

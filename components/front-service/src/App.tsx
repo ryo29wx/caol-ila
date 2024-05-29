@@ -19,8 +19,8 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user/:id" element={<UserDetails />} />
         <Route path="/search" element={<SearchResultDashboard />} />
-        <Route path="/fav/post" element={<FavoritePostList />} />
-        <Route path="/fav/get" element={<FavoriteGetList />} />
+        <Route path="/like/post" element={<FavoritePostList />} />
+        <Route path="/like/get" element={<FavoriteGetList />} />
         <Route path="/chat/list" element={<ChatList />} />
         <Route path="/account/create" element={<AccountCreate />} />
         <Route path="/account" element={<MyAccount />} />

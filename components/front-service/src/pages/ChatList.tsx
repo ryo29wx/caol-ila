@@ -1,14 +1,14 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import UserDetail from '../components/userdetail/UserDetail';
+import DashboardBottomNavigation from '../components/DashboardBottomNavigation';
+import Appbar from '../components/Appbar';
 
 const ChatList: React.FC = () => {
-    const { userId } = useParams<{ userId: string }>();
 
     return (
-        <div className="user-details-page">
-            <h2>User Detail</h2>
-            <UserDetail userId={Number(userId)} />
+        <div>
+            <Appbar />
+            <h1> Maintenance Now. </h1>
+            <DashboardBottomNavigation />
         </div>
     );
 };
