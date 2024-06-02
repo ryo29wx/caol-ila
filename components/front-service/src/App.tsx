@@ -1,5 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
+import AdminCreateAccount from './pages/AdminCreateAccount';
+import AdminEditAccount from './pages/AdminEditAccount';
+import AdminDeleteAccount from './pages/AdminDeleteAccount';
 import Dashboard from './pages/Dashboard';
 import SearchResultDashboard from './pages/SearchResultDashboard';
 import ChatList from './pages/ChatList';
@@ -24,6 +29,11 @@ const App: React.FC = () => {
         <Route path="/chat/list" element={<ChatList />} />
         <Route path="/account/create" element={<AccountCreate />} />
         <Route path="/account" element={<MyAccount />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/account/create" element={<AdminCreateAccount />} />
+        <Route path="/admin/account/edit" element={<AdminEditAccount />} />
+        <Route path="/admin/account/delete" element={<AdminDeleteAccount />} />
       </Routes>
     </Router>
   );

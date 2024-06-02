@@ -135,6 +135,48 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type GetLikesResponse struct {
+	Users []User `json:"users"`
+	Total int    `json:"total"`
+}
+
+func getReceveLikesHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("u")
+	fmt.Println("user id:" + userID)
+
+	getLikesResponse := GetLikesResponse{
+		Users: mockUsers,
+		Total: len(mockUsers),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(getLikesResponse); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+}
+
+type GetLikedResponse struct {
+	Users []User `json:"users"`
+	Total int    `json:"total"`
+}
+
+func getPostLikesHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("u")
+	fmt.Println("user id:" + userID)
+
+	getLikedResponse := GetLikedResponse{
+		Users: mockUsers,
+		Total: len(mockUsers),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(getLikedResponse); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+}
+
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -158,6 +200,8 @@ func createRandumUUID() string {
 
 func main() {
 	http.HandleFunc("/v1/search", enableCORS(searchHandler))
+	http.HandleFunc("/v1/like/rec", enableCORS(getReceveLikesHandler))
+	http.HandleFunc("/v1/like/req", enableCORS(getPostLikesHandler))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
