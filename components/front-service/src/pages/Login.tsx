@@ -56,6 +56,10 @@ const LoginPage: React.FC = () => {
         }
     };
 
+    const handleCreateAccount = () => {
+        navigate('/account/create');
+    };
+
     return (
         <Container maxWidth="sm">
         <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 1 }}>
@@ -115,8 +119,16 @@ const LoginPage: React.FC = () => {
               {errorMessage}
             </Typography>
           </Grid>
-        )}
+          )}
         </Grid>
+        </Box>
+        <Box component="form" onSubmit={handleCreateAccount} noValidate sx={{ mt: 1 }}>
+            <h4>初めてアカウントを作る場合はこちら！</h4>
+            <Grid item>
+            <Button type="submit" variant="contained" color="secondary" fullWidth>
+                Create Account
+            </Button>
+            </Grid>
         </Box>
       </Container>
     );
