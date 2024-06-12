@@ -11,6 +11,7 @@ import ChatList from './pages/ChatList';
 import FavoriteGetList from './pages/FavoriteGetList';
 import FavoritePostList from './pages/FavoritePostList';
 import AccountCreate from './pages/AccountCreate';
+import ProfileCreate from './pages/ProfileCreate';
 import MyAccount from './pages/Account';
 import Login from './pages/Login';
 import UserDetails from './pages/UserDetails';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
         <Route path="/like/get" element={<FavoriteGetList />} />
         <Route path="/chat/list" element={<ChatList />} />
         <Route path="/account/create" element={<AccountCreate />} />
+        <Route path="/account/create/p" element={<ProfileCreate />} />
         <Route path="/account" element={<MyAccount />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<Admin />} />

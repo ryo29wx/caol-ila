@@ -1,5 +1,8 @@
 import React, { useState, ChangeEvent} from 'react';
-import { Button, TextField, Container, Box } from '@mui/material';
+import { Box, Container, TextField, Button, IconButton, InputAdornment, Grid, Typography } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
 
 type ImageUploadState = {
     file: File | null;
@@ -12,6 +15,7 @@ const AccountCreate = () => {
     mail_address1: '',
     mail_address2: '',
     mail_address3: '',
+    password: '',
     phone_num1: '',
     phone_num2: '',
     phone_num3: '',
@@ -21,35 +25,66 @@ const AccountCreate = () => {
     post_code: 0,
     main_image: ''
   });
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [email, setEmail] = useState('');
   
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const apiUrl = process.env.REACT_APP_ADDITEM_API;
 
-    try {
-      const response = await fetch(`${apiUrl}/v1/account/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        body: JSON.stringify(user)
-      });
-
-      if (!response.ok) {
-        throw new Error('Something went wrong');
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match');
+    } else if (!validateEmail(email)) {
+      setErrorMessage('Invalid email address'); 
+    } else {
+      setErrorMessage('');
+      user.password = password;
+      user.mail_address1 = email;
+      try {
+        const response = await fetch(`${apiUrl}/v1/account/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(user)
+        });
+  
+        if (!response.ok) {
+          throw new Error('Something went wrong');
+        }
+  
+        const data = await response.json();
+        console.log(data); // Success handling
+      } catch (error) {
+        console.error(error); // Error handling
       }
-
-      const data = await response.json();
-      console.log(data); // Success handling
-    } catch (error) {
-      console.error(error); // Error handling
-    }
-  };
+    };
+  }
 
   const [imageUpload, setImageUpload] = useState<ImageUploadState>({ file: null, previewUrl: null });
 
@@ -67,6 +102,7 @@ const AccountCreate = () => {
   return (
     <Container component="main" maxWidth="xs">
     <h2>create user account! </h2>
+    <h3> このページでの登録情報は相手から見えません </h3>
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
         <TextField
           margin="normal"
@@ -87,7 +123,7 @@ const AccountCreate = () => {
           name="mail_address1"
           autoComplete="mail_address1"
           autoFocus
-          onChange={handleChange}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <TextField
           margin="normal"
@@ -97,7 +133,7 @@ const AccountCreate = () => {
           name="mail_address2"
           autoComplete="mail_address2"
           autoFocus
-          onChange={handleChange}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <TextField
           margin="normal"
@@ -107,8 +143,61 @@ const AccountCreate = () => {
           name="mail_address3"
           autoComplete="mail_address3"
           autoFocus
-          onChange={handleChange}
+          onChange={(e) => setEmail(e.target.value)}
         />
+        <TextField
+          margin="normal"
+          label="Password"
+          variant="outlined"
+          type={showPassword ? 'text' : 'password'}
+          fullWidth
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          margin="normal"
+          label="Confirm Password"
+          variant="outlined"
+          type={showConfirmPassword ? 'text' : 'password'}
+          fullWidth
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle confirm password visibility"
+                  onClick={handleClickShowConfirmPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                >
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        {errorMessage && (
+          <Grid item>
+            <Typography variant="body2" color="error">
+              {errorMessage}
+            </Typography>
+          </Grid>
+        )}
         <TextField
           margin="normal"
           fullWidth
