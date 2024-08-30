@@ -1,17 +1,16 @@
 import { FC } from 'react';
+import { Box } from '@mui/material';
 import RecommendedUsers from '../components/RecommendedUsers';
 import DashboardBottomNavigation from '../components/DashboardBottomNavigation';
 import Appbar from '../components/Appbar';
-import BelowAppbarSpace from '../components/BelowAppbarSpace';
 
 const Dashboard: FC = () => {
   return (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Appbar />
-      <BelowAppbarSpace />
       <RecommendedUsers />
       <DashboardBottomNavigation />
-    </div>
+    </Box>
   );
 };
 

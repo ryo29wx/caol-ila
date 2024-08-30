@@ -4,7 +4,7 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
-import { CardActionArea } from '@mui/material';
+import { CardActionArea, Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import FavoriteIcon from './RecommendedUserFavoriteIcon';
 
@@ -49,6 +49,7 @@ function RecommendedUsers() {
     }, [page]);
   
     return (
+      <Box sx={{ flex: 1 }}>
         <Grid container spacing={3}>
             {users.map((user) => (
                 <Grid item xs={12} sm={6} md={4} key={user.user_id}>
@@ -73,6 +74,7 @@ function RecommendedUsers() {
                 </Grid>
             ))}
         </Grid>
+      </Box>
     );
 };
   
