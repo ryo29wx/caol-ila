@@ -156,6 +156,24 @@ func getReceveLikesHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type GetChatsResponse struct {
+	Users []User `json:"users"`
+}
+
+func getChatListHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("u")
+	fmt.Println("user id:" + userID)
+
+	getChatsResponse := GetChatsResponse{
+		Users: mockUsers,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(getChatsResponse); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 type GetLikedResponse struct {
 	Users []User `json:"users"`
 	Total int    `json:"total"`
@@ -202,6 +220,7 @@ func main() {
 	http.HandleFunc("/v1/search", enableCORS(searchHandler))
 	http.HandleFunc("/v1/like/rec", enableCORS(getReceveLikesHandler))
 	http.HandleFunc("/v1/like/req", enableCORS(getPostLikesHandler))
+	http.HandleFunc("/v1/chat/list", enableCORS(getChatListHandler))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
