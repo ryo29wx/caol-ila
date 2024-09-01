@@ -7,6 +7,7 @@ import AdminEditAccount from './pages/AdminEditAccount';
 import AdminDeleteAccount from './pages/AdminDeleteAccount';
 import Dashboard from './pages/Dashboard';
 import SearchResultDashboard from './pages/SearchResultDashboard';
+import Chat from './pages/Chat';
 import ChatList from './pages/ChatList';
 import FavoriteGetList from './pages/FavoriteGetList';
 import FavoritePostList from './pages/FavoritePostList';
@@ -27,7 +28,8 @@ const App: React.FC = () => {
         <Route path="/search" element={<SearchResultDashboard />} />
         <Route path="/like/post" element={<FavoritePostList />} />
         <Route path="/like/get" element={<FavoriteGetList />} />
-        <Route path="/chat/list" element={<ChatList />} />
+        <Route path="/chat/" element={<ChatList />} />
+        <Route path="/chat/:id" element={<Chat />} />
         <Route path="/account/create" element={<AccountCreate />} />
         <Route path="/account/create/p" element={<ProfileCreate />} />
         <Route path="/account" element={<MyAccount />} />

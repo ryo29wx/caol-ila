@@ -14,7 +14,7 @@ function AppbarChatIcon() {
   const apiUrl = 'http://localhost:8080';
 
   const handleIconClick = () => {
-    window.open('/chat/list', '_blank');
+    window.open('/chat', '_blank');
   };
 
   useEffect(() => {
