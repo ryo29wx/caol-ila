@@ -43,22 +43,13 @@ jobs:
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v1
-    - name: GCP Authenticate
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-    - name: Setup GCloud
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-
-    - name: Configure docker to use the gcloud cli
-      run: gcloud auth configure-docker --quiet
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/search:latest"
+        export IMAGE_TAG="ghcr.io/${{ github.repository }}/search:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
 
@@ -94,24 +85,15 @@ jobs:
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v1
-    - name: GCP Authenticate
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-    - name: Setup GCloud
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-
-    - name: Configure docker to use the gcloud cli
-      run: gcloud auth configure-docker --quiet
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/recommned:latest"
+        export IMAGE_TAG="ghcr.io/${{ github.repository }}/recommend:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
+
 
   build_frontend:
     runs-on: ubuntu-22.04
@@ -142,24 +124,15 @@ jobs:
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v1
-    - name: GCP Authenticate
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-    - name: Setup GCloud
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-
-    - name: Configure docker to use the gcloud cli
-      run: gcloud auth configure-docker --quiet
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/front-service:latest"
+        export IMAGE_TAG="ghcr.io/${{ github.repository }}/front:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
+
 
 
   push_uam:
@@ -171,21 +144,12 @@ jobs:
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v1
-    - name: GCP Authenticate
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-    - name: Setup GCloud
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
-
-    - name: Configure docker to use the gcloud cli
-      run: gcloud auth configure-docker --quiet
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and push container
       run: |
-        export IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/caolila/uam:latest"
+        export IMAGE_TAG="ghcr.io/${{ github.repository }}/uam:latest"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
+
