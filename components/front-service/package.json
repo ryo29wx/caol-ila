@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@date-io/date-fns": "^3.0.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.14.16",
-    "@mui/material": "^5.15.19",
+    "@mui/lab": "^6.0.0-beta.11",
     "@mui/styled-engine-sc": "^6.0.0-alpha.4",
+    "@mui/x-date-pickers": "^7.20.0",
     "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -32,6 +34,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "vite": "^4.5.5"
   }
 }
