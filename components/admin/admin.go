@@ -1,17 +1,16 @@
 package main
 
 import (
-	"database/sql"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
-
-	_ "github.com/lib/pq"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -19,353 +18,415 @@ import (
 )
 
 const (
-	port = ":50051"
+	port         = ":50051"
+	keycloakURL  = "http://localhost:8080"
+	realm        = "caolila-realm-dev"
+	adminUser    = "superadmin"
+	adminPass    = "superadmin"
+	clientID     = "admin-cli"
+	clientSecret = "caolila-client-secret"
 )
 
+var user struct {
+	Firstname   string `json:"first_name" binding:"required"`
+	Lastname    string `json:"last_name" binding:"required"`
+	Email       string `json:"email" binding:"required"`
+	PhoneNum    string `json:"phone_num" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	Postcode    string `json:"postcode" binding:"required"`
+	Address1    string `json:"address1" binding:"required"`
+	Address2    string `json:"address2" binding:"required"`
+	Address3    string `json:"address3" binding:"required"`
+	Birthday    string `json:"birthday"`
+}
+
+var userForDelete struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 var (
-	getMyAccountReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "getmyaccount_request",
-		Help: "Total number of requests that have come to getmyaccount query",
+	createUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "create_user_req",
+		Help: "Total number of requests that have come to create-user",
 	})
 
-	getMyAccountResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "getmyaccount_response",
-		Help: "Total number of response that send from getmyaccount query",
-	})
-	editMyAccountReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "editmyaccount_request",
-		Help: "Total number of requests that have come to editmyaccount query",
+	updateUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "update_user_req",
+		Help: "Total number of response that send from update-user",
 	})
 
-	editMyAccountResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "editmyaccount_response",
-		Help: "Total number of response that send from editmyaccount query",
-	})
-
-	createMyAccountReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "createmyaccount_request",
-		Help: "Total number of requests that have come to editmyaccount query",
-	})
-
-	createMyAccountResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "createmyaccount_response",
-		Help: "Total number of response that send from editmyaccount query",
-	})
-
-	deleteMyAccountReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "deletemyaccount_request",
-		Help: "Total number of requests that have come to editmyaccount query",
-	})
-
-	deleteMyAccountResCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "deletemyaccount_response",
-		Help: "Total number of response that send from editmyaccount query",
+	deleteUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "delete_user_req",
+		Help: "Total number of response that send from delete-user",
 	})
 
 	logger *zap.Logger
-	db     *sql.DB
 )
 
-type User struct {
-	UserID       string    `json:"user_id"`
-	FirstName    string    `json:"first_name"`
-	LastName     string    `json:"last_name"`
-	MailAddress1 string    `json:"mail_address1"`
-	MailAddress2 string    `json:"mail_address2"`
-	MailAddress3 string    `json:"mail_address3"`
-	PhoneNum1    string    `json:"phone_num1"`
-	PhoneNum2    string    `json:"phone_num2"`
-	PhoneNum3    string    `json:"phone_num3"`
-	Address1     string    `json:"address1"`
-	Address2     string    `json:"address2"`
-	Address3     string    `json:"address3"`
-	PostCode     int       `json:"post_code"`
-	PayRank      int       `json:"pay_rank"`
-	Sex          int       `json:"sex"`
-	RegistDay    time.Time `json:"regist_day"`
-	Birthday     time.Time `json:"birthday"`
-}
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
-type UserData struct {
-	Users []User `json:"users"`
-	Total int    `json:"total"`
-}
-
-// Manipulate SQL
-func getAccountByAdmin(c *gin.Context) {
-
-	userID := c.Query("u")
-
-	if userID == "" {
-		logger.Error("User ID is missing when getting user data from SQL.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "hoge"})
-		return
-	}
-
-	// logging request log
-	logger.Debug("[getMyAccount] Request log", zap.String("user_id", userID))
-
-	// increment counter
-	getMyAccountReqCount.Inc()
-	user, err := getAccountDataBySQL(userID)
-	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Errorf("no user found with user_id %d", userID),
-		})
-		return
-	}
-	// increment counter
-	getMyAccountResCount.Inc()
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": user,
-	})
-}
-
-func getAccountDataBySQL(userID string) (*User, error) {
-	query := `SELECT * FROM user_info WHERE user_id = $1`
-	row := db.QueryRow(query, userID)
-
-	var user User
-	err := row.Scan(&user.UserID, &user.FirstName, &user.LastName, &user.MailAddress1, &user.MailAddress2, &user.MailAddress3, &user.PhoneNum1, &user.PhoneNum2, &user.PhoneNum3, &user.Address1, &user.Address2, &user.Address3, &user.PostCode, &user.PayRank, &user.Sex, &user.RegistDay, &user.Birthday)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			logger.Error("No user data in MongoDB.")
-			return nil, err
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
 		}
-		logger.Error("SQL error when user get account data.")
+
+		c.Next()
+	}
+}
+
+// Function to get an access token from Keycloak
+func getAccessToken() (string, error) {
+	data := "client_id=" + clientID + "&client_secret=" + clientSecret + "&username=" + adminUser + "&password=" + adminPass + "&grant_type=password"
+	req, err := http.NewRequest("POST", keycloakURL+"/realms/"+realm+"/protocol/openid-connect/token", bytes.NewBuffer([]byte(data)))
+	logger.Debug("getAccessToken called: ", zap.String("data", data))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+
+	return result["access_token"].(string), nil
+}
+
+func findUserByEmail(email string) ([]map[string]interface{}, error) {
+	token, err := getAccessToken()
+	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	req, err := http.NewRequest("GET", keycloakURL+"/admin/realms/"+realm+"/users?email="+email, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error")
+	}
+	logger.Debug(string(b))
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to find user: %s", resp.Status)
+	}
+
+	var users []map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
-func editAccountByAdmin(c *gin.Context) {
-	userID := c.PostForm("user_id")
-	firstName := c.PostForm("first_name")       // string
-	lastName := c.PostForm("last_name")         // number
-	mailAddress1 := c.PostForm("mail_address1") // number
-	mailAddress2 := c.PostForm("mail_address2") // number
-	mailAddress3 := c.PostForm("mail_address3") // token
-	phoneNum1 := c.PostForm("phone_num1")       // token
-	phoneNum2 := c.PostForm("phone_num2")       // token
-	phoneNum3 := c.PostForm("phone_num3")       // token
-	address1 := c.PostForm("address1")          // token
-	address2 := c.PostForm("address2")          // token
-	address3 := c.PostForm("address3")          // token
-	postCode := c.PostForm("post_code")         // token
-	payRank := c.PostForm("pay_rank")           // token
-	sex := c.PostForm("sex")                    // token
-	birthday := c.PostForm("birthday")          // token
-
-	logger.Debug("Request Edit Account data",
-		zap.String("userID", userID),
-		zap.String("firstName", firstName),
-		zap.String("lastName", lastName),
-		zap.String("mailAddress1", mailAddress1),
-		zap.String("mailAddress2", mailAddress2),
-		zap.String("mailAddress3", mailAddress3),
-		zap.String("phoneNum1", phoneNum1),
-		zap.String("phoneNum2", phoneNum2),
-		zap.String("phoneNum3", phoneNum3),
-		zap.String("address1", address1),
-		zap.String("address2", address2),
-		zap.String("address3", address3),
-		zap.String("postCode", postCode),
-		zap.String("payRank", payRank),
-		zap.String("sex", sex),
-		zap.String("birthday", birthday))
-
-	// increment counter
-	editMyAccountReqCount.Inc()
-
-	if userID == "" {
-		logger.Error("userID parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if firstName == "" {
-		logger.Error("firstName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if lastName == "" {
-		logger.Error("lastName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if mailAddress1 == "" {
-		logger.Error("mailAddress1 parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if payRank == "" {
-		logger.Error("payRank parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
+// Function to create a new user in Keycloak
+func createUser(c *gin.Context) {
+	if err := c.ShouldBindJSON(&user); err != nil {
+		log.Println("Error:", err)		
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// check the data if it exist
-	_, err := getMyAccountDataBySQL(userID)
+	logger.Debug("CreateUser called",
+		zap.String("first name", user.Firstname),
+		zap.String("last name", user.Lastname),
+		zap.String("email", user.Email),
+		zap.String("password", user.Password),
+		zap.String("postcode", user.Postcode),
+		zap.String("address1", user.Address1),
+		zap.String("address2", user.Address2),
+		zap.String("address3", user.Address3),
+		zap.String("phonenum", user.PhoneNum),
+		zap.String("birthday", user.Birthday),
+	)
+
+	data, err := findUserByEmail(user.Email)
+	if err == nil {
+		logger.Error("user data already exist.")
+		logger.Debug(data[0]["username"].(string))
+		return
+	}
+
+	token, err := getAccessToken()
 	if err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": fmt.Errorf("no user found with user_id %d", userID),
-		})
+		logger.Error("failed to get access token.")
 		return
 	}
+	logger.Debug(token)
 
-	query := `UPDATE user_info SET first_name = $1, last_name = $2, mail_address1 = $3, mail_address2 = $4, mail_address3 = $5, phone_num1 = $6, phone_num2 = $7, phone_num3 = $8, address1 = $9, address2 = $10, address3 = $11, post_code = $12, pay_rank = $13, sex = $14, birthday = $15 WHERE user_id = $16`
-	result, err := db.Exec(query, firstName, lastName, mailAddress1, mailAddress2, mailAddress3, phoneNum1, phoneNum2, phoneNum3, address1, address2, address3, postCode, payRank, sex, birthday, userID)
+	username := user.Firstname + "_" + user.Lastname
+
+	user := map[string]interface{}{
+		"username":      username,
+		"email":         user.Email,
+		"enabled":       true,
+		"emailVerified": true,
+		"firstName":     user.Firstname,
+		"lastName":      user.Lastname,
+		"credentials": []map[string]interface{}{
+			{
+				"type":  "password",
+				"value": user.Password,
+			},
+		},
+		"attributes": map[string]interface{}{
+			"phonenum": user.PhoneNum,
+			"postcode": user.Postcode,
+			"address1": user.Address1,
+			"address2": user.Address2,
+			"address3": user.Address3,
+			"birthday": user.Birthday,
+		},
+		"groups": []string{
+			"User",
+		},
+	}
+
+	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		logger.Error("error insert data.")
-		c.JSON(http.StatusForbidden, "NG")
+		logger.Error("error occurd when marshal json in createuser.")
 		return
 	}
 
-	// check the number of affected rows. if it does not exist, return error.
-	rowsAffected, err := result.RowsAffected()
+	req, err := http.NewRequest("POST", keycloakURL+"/admin/realms/"+realm+"/users", bytes.NewBuffer(jsonUser))
 	if err != nil {
-		logger.Error("Error when checking affected data.")
-		c.JSON(http.StatusForbidden, "NG")
+		logger.Error("error occurd when create request URL in createuser.")
 		return
 	}
 
-	if rowsAffected == 0 {
-		logger.Error("No affected data when insert.")
-		c.JSON(http.StatusForbidden, "NG")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("error occurd when call create user API of keycloak in createuser.")
 		return
 	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error")
+	}
+	logger.Debug(string(b))
 
-	// increment counter
-	editMyAccountResCount.Inc()
-	c.JSON(http.StatusOK, "OK")
+	if resp.StatusCode != http.StatusCreated {
+		logger.Error("failed to create new user.")
+		return
+	}
 }
 
-func createAccountByAdmin(c *gin.Context) {
-
-	firstName := c.PostForm("first_name")       // string
-	lastName := c.PostForm("last_name")         // number
-	mailAddress1 := c.PostForm("mail_address1") // number
-	mailAddress2 := c.PostForm("mail_address2") // number
-	mailAddress3 := c.PostForm("mail_address3") // token
-	phoneNum1 := c.PostForm("phone_num1")       // token
-	phoneNum2 := c.PostForm("phone_num2")       // token
-	phoneNum3 := c.PostForm("phone_num3")       // token
-	address1 := c.PostForm("address1")          // token
-	address2 := c.PostForm("address2")          // token
-	address3 := c.PostForm("address3")          // token
-	postCode := c.PostForm("post_code")         // token
-	payRank := c.PostForm("pay_rank")           // token
-	sex := c.PostForm("sex")                    // token
-	birthday := c.PostForm("birthday")          // token
-
-	logger.Debug("Request Edit Account data",
-		zap.String("firstName", firstName),
-		zap.String("lastName", lastName),
-		zap.String("mailAddress1", mailAddress1),
-		zap.String("mailAddress2", mailAddress2),
-		zap.String("mailAddress3", mailAddress3),
-		zap.String("phoneNum1", phoneNum1),
-		zap.String("phoneNum2", phoneNum2),
-		zap.String("phoneNum3", phoneNum3),
-		zap.String("address1", address1),
-		zap.String("address2", address2),
-		zap.String("address3", address3),
-		zap.String("postCode", postCode),
-		zap.String("payRank", payRank),
-		zap.String("sex", sex),
-		zap.String("birthday", birthday))
-
-	// increment counter
-	createMyAccountReqCount.Inc()
-
-	if firstName == "" {
-		logger.Error("firstName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if lastName == "" {
-		logger.Error("lastName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if mailAddress1 == "" {
-		logger.Error("mailAddress1 parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
+func updateUser(c *gin.Context) {
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	newUUID := uuid.New()
+	logger.Debug("UpdateUser called",
+		zap.String("first name", user.Firstname),
+		zap.String("last name", user.Lastname),
+		zap.String("email", user.Email),
+		zap.String("password", user.Password),
+		zap.String("postcode", user.Postcode),
+		zap.String("address1", user.Address1),
+		zap.String("address2", user.Address2),
+		zap.String("address3", user.Address3),
+		zap.String("phonenum", user.PhoneNum),
+		zap.String("birthday", user.Birthday),
+	)
 
-	query := `INSERT INTO user_info (user_id, first_name, mailAddress1, mailAddress2, mailAddress3, phoneNum1, phoneNum2, phoneNum3, address1, address2, address3, post_code, sex, pay_rank, regist_day, birthday) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())`
-
-	_, err := db.Exec(query, newUUID, firstName, lastName, mailAddress1, mailAddress2, mailAddress3, phoneNum1, phoneNum2, phoneNum3, address1, address2, address3, postCode, payRank, sex, birthday)
+	foundUser, err := findUserByEmail(user.Email)
 	if err != nil {
-		logger.Error("error insert data.")
-		c.JSON(http.StatusForbidden, "NG")
+		logger.Error("user who is you want to update does not exist.")
 		return
 	}
 
-	// increment counter
-	createMyAccountResCount.Inc()
-	c.JSON(http.StatusOK, "OK")
+	userID := foundUser[0]["id"].(string)
+	username := foundUser[0]["username"].(string)
+	firstname := foundUser[0]["firstname"].(string)
+	lastname := foundUser[0]["lastname"].(string)
+	attributes := foundUser[0]["attributes"].(map[string]interface{})
+	phonenum := attributes["phonenum"].(string)
+	postcode := attributes["postcode"].(string)
+	address1 := attributes["address1"].(string)
+	address2 := attributes["address2"].(string)
+	address3 := attributes["address3"].(string)
+
+	if firstname == user.Firstname {
+		firstname = user.Firstname
+	}
+	if lastname == user.Lastname {
+		lastname = user.Lastname
+	}
+	if firstname == user.Firstname || lastname == user.Lastname {
+		username = user.Firstname + "_" + user.Lastname
+	}
+	if phonenum == user.PhoneNum {
+		phonenum = user.PhoneNum
+	}
+	if postcode == user.Postcode {
+		postcode = user.Postcode
+	}
+	if address1 == user.Address1 {
+		address1 = user.Address1
+	}
+	if address2 == user.Address2 {
+		address2 = user.Address2
+	}
+	if address3 == user.Address3 {
+		address3 = user.Address3
+	}
+
+	token, err := getAccessToken()
+	if err != nil {
+		logger.Error("failed to get access token.")
+		return
+	}
+	logger.Debug(token)
+
+	user := map[string]interface{}{
+		"username":      username,
+		"email":         user.Email,
+		"enabled":       true,
+		"emailVerified": true,
+		"firstName":     firstname,
+		"lastName":      lastname,
+		"credentials": []map[string]interface{}{
+			{
+				"type":  "password",
+				"value": user.Password,
+			},
+		},
+		"attributes": map[string]interface{}{
+			"phonenum": phonenum,
+			"postcode": postcode,
+			"address1": address1,
+			"address2": address2,
+			"address3": address3,
+		},
+		"groups": []string{
+			"User",
+		},
+	}
+
+	jsonUser, err := json.Marshal(user)
+	if err != nil {
+		logger.Error("error occurd when marshal json in update user.")
+		return
+	}
+
+	req, err := http.NewRequest("PUT", keycloakURL+"/admin/realms/"+realm+"/users/"+userID, bytes.NewBuffer(jsonUser))
+	if err != nil {
+		logger.Error("error occurd when update request URL in update user.")
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("error occurd when call update user API of keycloak in updateuser.")
+		return
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error to read response body.")
+	}
+	logger.Debug(string(b))
+
+	if resp.StatusCode != http.StatusCreated {
+		logger.Error("failed to update user.")
+		return
+	}
 }
 
-func deleteAccountByAdmin(c *gin.Context) {
-
-	userID := c.PostForm("userID")             // string
-	mailaddress := c.PostForm("mail_address1") // number
-	password := c.PostForm("password")         // number
-
-	if userID == "" || mailaddress == "" || password == "" {
-		logger.Error("Delete account parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Some mandatory parameter are missing."})
+func deleteUser(c *gin.Context) {
+	if err := c.ShouldBindJSON(&userForDelete); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// logging request log
-	logger.Debug("Request log", zap.String("userID", userID), zap.String("mailaddress", mailaddress), zap.String("password", password))
 
-	user, err := getMyAccountDataBySQL(userID)
+	logger.Debug("DeleteUser called",
+		zap.String("email", userForDelete.Email),
+		zap.String("password", userForDelete.Password),
+	)
+
+	foundUser, err := findUserByEmail(userForDelete.Email)
 	if err != nil {
-		logger.Error("error on getting data from SQL")
+		logger.Error("failed to get user data by email.")
 		return
 	}
 
-	if user.MailAddress1 != mailaddress {
-		logger.Error("different mailaddress")
-		return
-	}
+	userID := foundUser[0]["id"].(string)
 
-	if "password" != password {
-		logger.Error("different password")
-		return
-	}
-
-	query := `DELETE FROM user_info WHERE user_id = $1`
-	result, err := db.Exec(query, userID)
+	token, err := getAccessToken()
 	if err != nil {
-		logger.Error("No user data in MongoDB.")
+		logger.Error("failed to get access token.")
 		return
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	logger.Debug(token)
+
+	req, err := http.NewRequest("DELETE", keycloakURL+"/admin/realms/"+realm+"/users/"+userID, nil)
 	if err != nil {
-		logger.Error("No user data in MongoDB.")
+		logger.Error("error occurd when delete request URL in deleteuser.")
 		return
 	}
 
-	if rowsAffected == 0 {
-		logger.Error("No user data in MongoDB.")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("error occurd when call delete user API of keycloak in delete user account.")
 		return
 	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("error to read response body.")
+	}
+	logger.Debug(string(b))
 
-	c.JSON(http.StatusOK, "OK")
-	return
+	if resp.StatusCode != http.StatusCreated {
+		logger.Error("failed to delete user.")
+		return
+	}
 }
 
 func main() {
-	// set-up logging environment using zap
 	var err error
 
 	environment := os.Getenv("CAOLILA_ENV")
@@ -381,7 +442,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Println("failed to set-up zap log in search component. \n")
+		log.Println("failed to set-up zap log in admin. \n")
 		panic(err)
 	}
 
@@ -390,59 +451,15 @@ func main() {
 
 	defer logger.Sync()
 
-	// set up PostgreSQL
-	pgHost := os.Getenv("PG_HOST")
-	pgPort := os.Getenv("PG_PORT")
-	pgInitUser := os.Getenv("PG_INIT_USER")
-	pgInitPass := os.Getenv("PG_INIT_PASS")
-	pgCaolilaDB := os.Getenv("PG_CAOLILA_DB")
-	pgSsl := os.Getenv("PG_SSL")
-
-	if pgHost == "" {
-		logger.Error("does not exist PG_HOST.")
-		pgHost = "localhost"
-	}
-	if pgPort == "" {
-		logger.Error("does not exist PG_PORT.")
-		pgPort = "5432"
-	}
-	if pgInitUser == "" {
-		logger.Error("does not exist PG_INIT_USER.")
-		pgInitUser = "power"
-	}
-	if pgInitPass == "" {
-		logger.Error("does not exist PG_INIT_PASS.")
-		pgInitPass = "bar"
-	}
-	if pgCaolilaDB == "" {
-		logger.Error("does not exist PG_CAOLILA_DB.")
-		pgCaolilaDB = "caolila"
-	}
-	if pgSsl == "" {
-		logger.Error("does not exist PG_SSL.")
-		pgSsl = "disable"
-	}
-	connStr := "host=" + pgHost + " port=" + pgPort + " user=" + pgInitUser + " password=" + pgInitPass + " dbname=" + pgCaolilaDB + " sslmode=" + pgSsl
-	logger.Debug("Postgre connection:", connStr)
-
-	// データベースへの接続を開く
-	db, err = sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
 	// expose /metrics endpoint for observer(by default Prometheus).
 	go exportMetrics()
 
 	// start application
 	router := gin.Default()
-	router.POST("v1/admin/account/create", createAccountByAdmin)
-	router.POST("v1/admin/account/edit", editAccountByAdmin)
-	router.DELETE("v1/admin/account/delete", deleteAccountByAdmin)
+	router.Use(CORSMiddleware())
+	router.POST("v1/admin/account/create", createUser)
+	router.PUT("v1/admin/account/update", updateUser)
+	router.DELETE("v1/admin/account/delete", deleteUser)
 	router.Run(port)
 
 }
