@@ -47,18 +47,18 @@ var userForDelete struct {
 
 var (
 	createUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "create_seller_req",
-		Help: "Total number of requests that have come to create-seller",
+		Name: "create_user_req",
+		Help: "Total number of requests that have come to create-user",
 	})
 
 	updateUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "update_seller_req",
-		Help: "Total number of response that send from update-seller",
+		Name: "update_user_req",
+		Help: "Total number of response that send from update-user",
 	})
 
 	deleteUserReqCount = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "delete_seller_req",
-		Help: "Total number of response that send from delete-seller",
+		Name: "delete_user_req",
+		Help: "Total number of response that send from delete-user",
 	})
 
 	logger *zap.Logger
@@ -207,7 +207,7 @@ func createUser(c *gin.Context) {
 			"birthday": user.Birthday,
 		},
 		"groups": []string{
-			"Seller",
+			"User",
 		},
 	}
 
@@ -334,7 +334,7 @@ func updateUser(c *gin.Context) {
 			"address3": address3,
 		},
 		"groups": []string{
-			"Seller",
+			"User",
 		},
 	}
 
@@ -367,7 +367,7 @@ func updateUser(c *gin.Context) {
 	logger.Debug(string(b))
 
 	if resp.StatusCode != http.StatusCreated {
-		logger.Error("failed to update seller user.")
+		logger.Error("failed to update user.")
 		return
 	}
 }
@@ -378,7 +378,7 @@ func deleteUser(c *gin.Context) {
 		return
 	}
 
-	logger.Debug("DeleteSellerUser called",
+	logger.Debug("DeleteUser called",
 		zap.String("email", userForDelete.Email),
 		zap.String("password", userForDelete.Password),
 	)
@@ -421,7 +421,7 @@ func deleteUser(c *gin.Context) {
 	logger.Debug(string(b))
 
 	if resp.StatusCode != http.StatusCreated {
-		logger.Error("failed to delete seller user.")
+		logger.Error("failed to delete user.")
 		return
 	}
 }
