@@ -83,9 +83,17 @@ func getMyProfile(c *gin.Context) {
 	// increment counter
 	searchResCount.Inc()
 
+	for _, user := range users {
+		if user.UserID == id {
+			c.JSON(http.StatusOK, gin.H{
+				user
+			})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"users": users,
-		"total": page,
+		"error_message": "can not find user by id"
 	})
 }
 

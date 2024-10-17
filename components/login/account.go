@@ -379,8 +379,8 @@ func deleteMyAccount(c *gin.Context) {
  */
 func loginMyAccount(c *gin.Context) {
 
-	mailaddress := c.PostForm("mail_address1") // number
-	password := c.PostForm("password")         // number
+	mailaddress := c.PostForm("mail_address1") 
+	password := c.PostForm("password")         
 
 	if mailaddress == "" || password == "" {
 		logger.Error("Delete account parameter is missing.")

@@ -460,6 +460,8 @@ func main() {
 	router.POST("v1/admin/account/create", createUser)
 	router.PUT("v1/admin/account/update", updateUser)
 	router.DELETE("v1/admin/account/delete", deleteUser)
+	// router.DELETE("v1/admin/account/activate", activateUser)
+	// router.DELETE("v1/admin/account/deactivate", deactivateUser)
 	router.Run(port)
 
 }
