@@ -7,16 +7,18 @@ type ImageUploadState = {
     previewUrl: string | null;
 };
 
-const ProfileCreate = () => {
+const Profile = () => {
+  const [gender, setGender] = useState<string>('');
   const [user, setUser] = useState({
     display_name: '',
-    gender: '',
-    age: '',
+    sex: 0,
+    age: 0,
     title: '',
     company: '',
     company_email: '',
     career: '',
     academic: '',
+    main_image: '',
     description: ''
   });
 
@@ -29,28 +31,12 @@ const ProfileCreate = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // const apiUrl = process.env.REACT_APP_ADDITEM_API;
-    const apiUrl = "http://localhost:50051/v1/profile/create";
-
-    if (!imageUpload.file) {
-      alert("プロフィール画像を選択してください。");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('main_mage', imageUpload.file);
-    formData.append('display_name', user.display_name);
-    formData.append('gender', user.gender);
-    formData.append('age', user.age);
-    formData.append('title', user.title);
-    formData.append('company', user.company);
-    formData.append('company_email', user.company_email);
-
+    const apiUrl = process.env.REACT_APP_ADDITEM_API;
 
     try {
       const response = await fetch(`${apiUrl}/v1/profile/create`, {
         method: 'POST',
-        body: formData,
+        body: JSON.stringify(user)
       });
 
       if (!response.ok) {
@@ -94,25 +80,20 @@ const ProfileCreate = () => {
         />
         <FormControl component="fieldset">
           <FormLabel component="legend">性別</FormLabel>
-          <RadioGroup id="gender" onChange={handleChange} row>
-            <FormControlLabel id="gender" value="男" control={<Radio />} label="男" />
-            <FormControlLabel id="gender" value="女" control={<Radio />} label="女" />
-            <FormControlLabel id="gender" value="その他" control={<Radio />} label="その他" />
+          <RadioGroup value={gender} onChange={handleChange} row>
+            <FormControlLabel value="男" control={<Radio />} label="男" />
+            <FormControlLabel value="女" control={<Radio />} label="女" />
+            <FormControlLabel value="その他" control={<Radio />} label="その他" />
           </RadioGroup>
         </FormControl>
         <TextField
           margin="normal"
           fullWidth
           id="age"
-          label="Age"
+          label="表示年齢"
           name="age"
           autoComplete="age"
           autoFocus
-          inputProps={{
-            pattern: '[0-9]*', 
-            inputMode: 'numeric',        
-            maxLength: 8,               
-          }}
           onChange={handleChange}
         />
         <TextField
@@ -155,9 +136,6 @@ const ProfileCreate = () => {
           name="detail"
           autoComplete="detail"
           autoFocus
-          multiline
-          rows={5} 
-          helperText="私は**会社に勤めています！ よろしくお願いします！"
           onChange={handleChange}
         />
         <div>
@@ -184,4 +162,4 @@ const ProfileCreate = () => {
   );
 };
 
-export default ProfileCreate;
+export default Profile;

@@ -216,52 +216,26 @@ func editMyProfile(c *gin.Context) {
 }
 
 func createMyProfile(c *gin.Context) {
+	displayName := c.PostForm("display_name") 
+	gender := c.PostForm("gender")   
+	age := c.PostForm("age")      
+	title := c.PostForm("title")            
+	company := c.PostForm("company") 
+	companyEmail := c.PostForm("company_email") 
 
-	productName := c.PostForm("product_name") // string
-	sellerName := c.PostForm("seller_name")   // string
-	category := c.PostForm("category")        // number
-	price := c.PostForm("price")              // number
-	stock := c.PostForm("stock")              // number
-	token := c.PostForm("token")              // token
-
-	logger.Debug("Request Add Item log",
-		zap.String("productName", productName),
-		zap.String("sellerName", sellerName),
-		zap.String("category", category),
-		zap.String("price", price),
-		zap.String("stock", stock),
-		zap.String("token", token))
+	logger.Debug("Request create user profile log",
+		zap.String("displayName", displayName),
+		zap.String("gender", gender),
+		zap.String("age", age),
+		zap.String("title", title),
+		zap.String("company", company),
+		zap.String("companyEmail", companyEmail))
 
 	// increment counter
-	addItemReqCount.Inc()
+	getMyProfileReqCount.Inc()
 
-	if productName == "" {
-		logger.Error("AddItem productName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if sellerName == "" {
-		logger.Error("AddItem sellerName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if category == "" {
-		logger.Error("AddItem category parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if price == "" {
-		logger.Error("AddItem price parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if stock == "" {
-		logger.Error("AddItem stock parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if token == "" {
-		logger.Error("AddItem token parameter is missing.")
+	if displayName == "" {
+		logger.Error("CreateProfile displayName parameter is missing.")
 		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
 		return
 	}
@@ -272,6 +246,18 @@ func createMyProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	logger.Debug("Uploaded File: %+v\n", mainImage.Filename)
+	logger.Debug("File Size: %+v\n", mainImage.Size)
+	logger.Debug("MIME Header: %+v\n", mainImage.Header)
+
+	// Get the file data to ./upload（保存先ディレクトリ: ./uploads）
+	savePath := filepath.Join("uploads", file.Filename)
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ファイルの保存に失敗しました"})
+		return
+	}
+	
 
 	// Save the image file on GCS
 	ctx := context.Background()
@@ -289,48 +275,8 @@ func createMyProfile(c *gin.Context) {
 
 	}
 
-	// Save the item data on MongoDB
-	numStock, err := strconv.Atoi(stock)
-	if err != nil {
-		logger.Error("convert error with stock value:", zap.Error(err))
-		return
-	}
-
-	numCategory, err := strconv.Atoi(category)
-	if err != nil {
-		logger.Error("convert error with category value:", zap.Error(err))
-		return
-	}
-
-	numPrice, err := strconv.Atoi(price)
-	if err != nil {
-		logger.Error("convert error with price value:", zap.Error(err))
-		return
-	}
-
-	item := Item{ProductId: "hogehoge",
-		ProductName: productName,
-		SellerName:  sellerName,
-		Stocks:      numStock,
-		Category:    []int{numCategory},
-		Rank:        99999,
-		MainImage:   gcsFilePath,
-		Summary:     "test item",
-		Price:       numPrice,
-		RegistDay:   time.Now(),
-		LastUpdate:  time.Now(),
-	}
-
-	_, err = collection.InsertOne(ctx, item)
-	if err != nil {
-		logger.Error("failed to add item to mongo", zap.Error(err))
-		c.JSON(http.StatusNotFound, "error")
-	}
-
-	// increment counter
-	addItemResCount.Inc()
-
-	c.JSON(http.StatusOK, "OK")
+	// アップロード成功メッセージを返す
+	c.JSON(http.StatusOK, gin.H{"message": "Success creating your profile"})
 }
 
 func deleteMyProfile(c *gin.Context) {
