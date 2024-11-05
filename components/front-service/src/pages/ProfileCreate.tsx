@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent} from 'react';
-import { Box, Container, TextField, Button, Tooltip } from '@mui/material';
+import { Box, Container, TextField, Button, Tooltip, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 
 type ImageUploadState = {
@@ -9,28 +9,48 @@ type ImageUploadState = {
 
 const ProfileCreate = () => {
   const [user, setUser] = useState({
-    nick_name: '',
-    sex: 0,
-    age: 0,
+    display_name: '',
+    gender: '',
+    age: '',
     title: '',
     company: '',
     company_email: '',
-    main_image: '',
-    detail: ''
+    career: '',
+    academic: '',
+    description: ''
   });
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
+  
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const apiUrl = process.env.REACT_APP_ADDITEM_API;
+    // const apiUrl = process.env.REACT_APP_ADDITEM_API;
+    const apiUrl = "http://localhost:50051";
+
+    if (!imageUpload.file) {
+      alert("プロフィール画像を選択してください。");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('main_image', imageUpload.file);
+    formData.append('display_name', user.display_name);
+    formData.append('gender', user.gender);
+    formData.append('age', user.age);
+    formData.append('title', user.title);
+    formData.append('company', user.company);
+    formData.append('company_email', user.company_email);
+    formData.append('description', user.description);
 
     try {
       const response = await fetch(`${apiUrl}/v1/profile/create`, {
         method: 'POST',
-        body: JSON.stringify(user)
+        body: formData,
       });
 
       if (!response.ok) {
@@ -65,39 +85,41 @@ const ProfileCreate = () => {
           margin="normal"
           required
           fullWidth
-          id="nick_name"
-          label="表示名(ニックネーム)"
-          name="nick_name"
-          autoComplete="nick_name"
+          id="display_name"
+          label="Display Name"
+          name="display_name"
+          autoComplete="display_name"
           autoFocus
           onChange={handleChange}
         />
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          id="sex"
-          label="性別"
-          name="sex"
-          autoComplete="sex"
-          autoFocus
-          onChange={handleChange}
-        />
+        <FormControl component="fieldset">
+          <FormLabel component="legend">性別</FormLabel>
+          <RadioGroup id="gender" onChange={handleChange} row>
+            <FormControlLabel id="gender" value="男" control={<Radio />} label="男" />
+            <FormControlLabel id="gender" value="女" control={<Radio />} label="女" />
+            <FormControlLabel id="gender" value="その他" control={<Radio />} label="その他" />
+          </RadioGroup>
+        </FormControl>
         <TextField
           margin="normal"
           fullWidth
           id="age"
-          label="表示年齢"
+          label="Age"
           name="age"
           autoComplete="age"
           autoFocus
+          inputProps={{
+            pattern: '[0-9]*', 
+            inputMode: 'numeric',        
+            maxLength: 8,               
+          }}
           onChange={handleChange}
         />
         <TextField
           margin="normal"
           fullWidth
           id="title"
-          label="職業"
+          label="ロール名・肩書"
           name="title"
           autoComplete="title"
           autoFocus
@@ -128,11 +150,14 @@ const ProfileCreate = () => {
         <TextField
           margin="normal"
           fullWidth
-          id="detail"
+          id="description"
           label="自己紹介"
-          name="detail"
-          autoComplete="detail"
+          name="description"
+          autoComplete="description"
           autoFocus
+          multiline
+          rows={5} 
+          helperText="私は**会社に勤めています！ よろしくお願いします！"
           onChange={handleChange}
         />
         <div>

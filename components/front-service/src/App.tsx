@@ -12,8 +12,8 @@ import Chat from './pages/Chat';
 import ChatList from './pages/ChatList';
 import FavoriteGetList from './pages/FavoriteGetList';
 import FavoritePostList from './pages/FavoritePostList';
-import AccountCreate from './pages/AccountCreate';
 import ProfileCreate from './pages/ProfileCreate';
+import Profile from './pages/Profile';
 import MyAccount from './pages/Account';
 import Login from './pages/Login';
 import UserDetails from './pages/UserDetails';
@@ -55,8 +55,8 @@ const App: React.FC = () => {
         <Route path="/like/get" element={<FavoriteGetList />} />
         <Route path="/chat/" element={isAuthenticated ? <ChatList /> : <Navigate to="/login" />} />
         <Route path="/chat/:id" element={<Chat />} />
-        <Route path="/account/create" element={<AccountCreate />} />
-        <Route path="/account/create/p" element={<ProfileCreate />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/create" element={<ProfileCreate />} />
         <Route path="/account" element={<MyAccount />} />
         <Route path="/login" element={<Login />} />
       </Routes>
