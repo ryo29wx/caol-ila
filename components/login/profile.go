@@ -2,17 +2,19 @@ package main
 
 import (
 	"context"
-	"io"
+	// "io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,32 +38,49 @@ var (
 
 	logger     *zap.Logger
 	collection *mongo.Collection
+	// conx       context.Context
 )
 
 type User struct {
-	UserID   int    `json:"user_id"`
-	NickName string `json:"nick_name"`
-	Sex      string `json:"sex"`
-	Title    string `json:"title"`
-	Company  string `json:"company"`
-	Like     int    `json:"like"`
-	ImageURL string `json:"image_url"`
+	UserID       string
+	DisplayName  string
+	Sex          string
+	Age          int
+	Title        string
+	Company      string
+	CompanyEmail string
+	Likes        []string
+	Dislikes     []string
+	Blocks       []string
+	MainImage    string
+	ImagePath    []string
+	RegistDay    time.Time
+	LastLogin    time.Time
 }
 
-//	Get User Data from SQL and NoSQL.
-//		string query = 1;
-//		int32 sort = 2;
-//		string token = 3;
-//	 }
-//
-// Manipulate SQL
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func getMyProfile(c *gin.Context) {
 
 	id := c.Query("u")
 
 	if id == "" {
 		logger.Error("User ID is missing when getting user data from NoSQL.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "hoge"})
+		c.JSON(http.StatusNoContent, gin.H{"message": "missing user id"})
 		return
 	}
 
@@ -71,157 +90,32 @@ func getMyProfile(c *gin.Context) {
 	// increment counter
 	getMyProfileReqCount.Inc()
 
-	var users []User
-	for _, val := range searchRes.Hits {
-		if s, ok := val.(User); ok {
-			users = append(users, s)
-		} else {
-			logger.Error("Value is not of type pb.ResponseResult")
-		}
-	}
+	filter := bson.M{"userid": id}
+	var result bson.M
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 
-	// increment counter
-	searchResCount.Inc()
-
-	for _, user := range users {
-		if user.UserID == id {
-			c.JSON(http.StatusOK, gin.H{
-				user
-			})
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// Not exist this user id
+			c.JSON(http.StatusOK, gin.H{"error_message": "can not find user by id"})
 			return
 		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"error_message": "can not find user by id"
-	})
-}
-
-func editMyProfile(c *gin.Context) {
-
-	productName := c.PostForm("product_name") // string
-	sellerName := c.PostForm("seller_name")   // string
-	category := c.PostForm("category")        // number
-	price := c.PostForm("price")              // number
-	stock := c.PostForm("stock")              // number
-	token := c.PostForm("token")              // token
-
-	logger.Debug("Request Add Item log",
-		zap.String("productName", productName),
-		zap.String("sellerName", sellerName),
-		zap.String("category", category),
-		zap.String("price", price),
-		zap.String("stock", stock),
-		zap.String("token", token))
-
-	// increment counter
-	addItemReqCount.Inc()
-
-	if productName == "" {
-		logger.Error("AddItem productName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if sellerName == "" {
-		logger.Error("AddItem sellerName parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if category == "" {
-		logger.Error("AddItem category parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if price == "" {
-		logger.Error("AddItem price parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if stock == "" {
-		logger.Error("AddItem stock parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
-		return
-	}
-	if token == "" {
-		logger.Error("AddItem token parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "Parameter missing"})
+		// Unexpected Error
+		c.JSON(http.StatusOK, gin.H{"error_message": "can not find user by id"})
 		return
 	}
 
-	// manipulate main image
-	mainImage, err := c.FormFile("file") // []byte
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Save the image file on GCS
-	ctx := context.Background()
-	gcsFilePath := bucketName + "/" + sellerName + "/" + mainImage.Filename
-	logger.Debug("gcs file path:", zap.String("gcsFilePath", gcsFilePath))
-	wc := bucket.Object(gcsFilePath).NewWriter(ctx)
-	mainImageReader, err := FileHeaderToReader(mainImage)
-
-	if _, err := io.Copy(wc, mainImageReader); err != nil {
-		logger.Error("Failed to upload file to GCS:", zap.Error(err))
-	}
-	if err := wc.Close(); err != nil {
-		logger.Error("Failed to close GCS writer:", zap.Error(err))
-		c.JSON(http.StatusNotFound, "error")
-
-	}
-
-	// Save the item data on MongoDB
-	numStock, err := strconv.Atoi(stock)
-	if err != nil {
-		logger.Error("convert error with stock value:", zap.Error(err))
-		return
-	}
-
-	numCategory, err := strconv.Atoi(category)
-	if err != nil {
-		logger.Error("convert error with category value:", zap.Error(err))
-		return
-	}
-
-	numPrice, err := strconv.Atoi(price)
-	if err != nil {
-		logger.Error("convert error with price value:", zap.Error(err))
-		return
-	}
-
-	item := Item{ProductId: "hogehoge",
-		ProductName: productName,
-		SellerName:  sellerName,
-		Stocks:      numStock,
-		Category:    []int{numCategory},
-		Rank:        99999,
-		MainImage:   gcsFilePath,
-		Summary:     "test item",
-		Price:       numPrice,
-		RegistDay:   time.Now(),
-		LastUpdate:  time.Now(),
-	}
-
-	_, err = collection.InsertOne(ctx, item)
-	if err != nil {
-		logger.Error("failed to add item to mongo", zap.Error(err))
-		c.JSON(http.StatusNotFound, "error")
-	}
-
-	// increment counter
-	addItemResCount.Inc()
-
-	c.JSON(http.StatusOK, "OK")
+	c.JSON(http.StatusOK, result)
 }
 
 func createMyProfile(c *gin.Context) {
-	displayName := c.PostForm("display_name") 
-	gender := c.PostForm("gender")   
-	age := c.PostForm("age")      
-	title := c.PostForm("title")            
-	company := c.PostForm("company") 
-	companyEmail := c.PostForm("company_email") 
+	displayName := c.PostForm("display_name")
+	gender := c.PostForm("gender")
+	age := c.PostForm("age")
+	title := c.PostForm("title")
+	company := c.PostForm("company")
+	companyEmail := c.PostForm("company_email")
+	description := c.PostForm("description")
 
 	logger.Debug("Request create user profile log",
 		zap.String("displayName", displayName),
@@ -229,7 +123,9 @@ func createMyProfile(c *gin.Context) {
 		zap.String("age", age),
 		zap.String("title", title),
 		zap.String("company", company),
-		zap.String("companyEmail", companyEmail))
+		zap.String("companyEmail", companyEmail),
+		zap.String("description", description),
+	)
 
 	// increment counter
 	getMyProfileReqCount.Inc()
@@ -241,88 +137,61 @@ func createMyProfile(c *gin.Context) {
 	}
 
 	// manipulate main image
-	mainImage, err := c.FormFile("file") // []byte
+	mainImage, err := c.FormFile("main_image") // []byte
 	if err != nil {
+		logger.Error("Something wrong with main_image from client.", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	logger.Debug("Uploaded File: %+v\n", mainImage.Filename)
-	logger.Debug("File Size: %+v\n", mainImage.Size)
-	logger.Debug("MIME Header: %+v\n", mainImage.Header)
-
 	// Get the file data to ./upload（保存先ディレクトリ: ./uploads）
-	savePath := filepath.Join("uploads", file.Filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ファイルの保存に失敗しました"})
+	savePath := "./uploads/" + mainImage.Filename
+	if err := c.SaveUploadedFile(mainImage, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save the image data"})
 		return
 	}
-	
 
 	// Save the image file on GCS
-	ctx := context.Background()
-	gcsFilePath := bucketName + "/" + sellerName + "/" + mainImage.Filename
-	logger.Debug("gcs file path:", zap.String("gcsFilePath", gcsFilePath))
-	wc := bucket.Object(gcsFilePath).NewWriter(ctx)
-	mainImageReader, err := FileHeaderToReader(mainImage)
+	// ctx := context.Background()
+	// gcsFilePath := bucketName + "/" + sellerName + "/" + mainImage.Filename
+	// logger.Debug("gcs file path:", zap.String("gcsFilePath", gcsFilePath))
+	// wc := bucket.Object(gcsFilePath).NewWriter(ctx)
+	// mainImageReader, err := FileHeaderToReader(mainImage)
 
-	if _, err := io.Copy(wc, mainImageReader); err != nil {
-		logger.Error("Failed to upload file to GCS:", zap.Error(err))
+	// if _, err := io.Copy(wc, mainImageReader); err != nil {
+	// 	logger.Error("Failed to upload file to GCS:", zap.Error(err))
+	// }
+	// if err := wc.Close(); err != nil {
+	// 	logger.Error("Failed to close GCS writer:", zap.Error(err))
+	// 	c.JSON(http.StatusNotFound, "error")
+
+	// }
+	ageInt, _ := strconv.Atoi(age)
+
+	user := User{
+		UserID:       uuid.New().String(),
+		DisplayName:  displayName,
+		Sex:          gender,
+		Age:		  ageInt,
+		Title:        title,
+		Company:      company,
+		CompanyEmail: companyEmail,
+		Likes:        make([]string, 0),
+		Dislikes:     make([]string, 0),
+		Blocks:       make([]string, 0),
+		MainImage:    savePath,
+		ImagePath:    make([]string, 0),
+		RegistDay:    time.Now(),
+		LastLogin:    time.Now(),
 	}
-	if err := wc.Close(); err != nil {
-		logger.Error("Failed to close GCS writer:", zap.Error(err))
-		c.JSON(http.StatusNotFound, "error")
 
-	}
-
-	// アップロード成功メッセージを返す
-	c.JSON(http.StatusOK, gin.H{"message": "Success creating your profile"})
-}
-
-func deleteMyProfile(c *gin.Context) {
-
-	query := c.Query("q")
-	page := c.Query("p")
-	token := c.Query("t")
-
-	if query == "" || token == "" || page == "" {
-		logger.Error("Search Query parameter is missing.")
-		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
-		return
-	}
-
-	// logging request log
-	logger.Debug("Request log", zap.String("query", query), zap.String("page", page), zap.String("token", token))
-
-	// increment counter
-	searchReqCount.Inc()
-
-	searchRes, err := meiliclient.Index("users").Search(query,
-		&meilisearch.SearchRequest{
-			Limit: 25,
-		})
+	_, err = collection.InsertOne(context.Background(), user)
 	if err != nil {
-		logger.Error("failed to search in some reasons.", zap.Error(err))
-		c.JSON(http.StatusNoContent, gin.H{"message": "There is no users"})
-		return
+		logger.Error("failed to create profile to mongo", zap.Error(err))
+		c.JSON(http.StatusNotFound, "error")
 	}
 
-	var users []User
-	for _, val := range searchRes.Hits {
-		if s, ok := val.(User); ok {
-			users = append(users, s)
-		} else {
-			logger.Error("Value is not of type pb.ResponseResult")
-		}
-	}
-
-	// increment counter
-	searchResCount.Inc()
-
-	c.JSON(http.StatusOK, gin.H{
-		"users": users,
-		"total": page,
-	})
+	c.JSON(http.StatusOK, gin.H{"message": "Success creating your profile"})
 }
 
 func main() {
@@ -355,10 +224,11 @@ func main() {
 	mongoPort := os.Getenv("MONGO_SVC_SERVICE_PORT")
 	mongoPass := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 	mongoUser := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
+	mongoUserDb := os.Getenv("MONGO_USER_DB_NAME")
 
 	if mongoHost == "" {
 		logger.Error("does not exist remote mongo host.")
-		mongoHost = "localhost"
+		mongoHost = "127.0.0.1"
 	}
 	if mongoPort == "" {
 		logger.Error("does not exist remote mongo port.")
@@ -366,36 +236,34 @@ func main() {
 	}
 	if mongoPass == "" {
 		logger.Error("does not exist remote mongo password.")
-		mongoPass = "bar"
+		mongoPass = "password"
 	}
 	if mongoUser == "" {
 		logger.Error("does not exist remote mongo username.")
-		mongoUser = "bar"
+		mongoUser = "user_info_owner"
 	}
-
-	remoteMongoHost := "mongodb://" + mongoUser + ":" + mongoPass + "@" + mongoHost + ":" + mongoPort
-	client, err := mongo.NewClient(options.Client().ApplyURI(remoteMongoHost))
-	if err != nil {
-		logger.Error("does not exist remote mongo port.")
-		panic(err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-		logger.Error("unexpected error occur when connect to mongo.")
-		panic(err)
-	}
-	defer client.Disconnect(ctx)
-
-	mongoUserDb := os.Getenv("MONGO_USER_DB_NAME")
-	mongoUserCollection := os.Getenv("MONGO_USER_COLLECTION_NAME")
-	if mongoHost == "" {
+	if mongoUserDb == "" {
 		logger.Error("does not exist MONGO_USER_DB_NAME.")
 		mongoUserDb = "user_info"
 	}
-	if mongoPort == "" {
+
+	remoteMongoHost := "mongodb://" + mongoUser + ":" + mongoPass + "@" + mongoHost + ":" + mongoPort + "/" + mongoUserDb
+	clientOptions := options.Client().ApplyURI(remoteMongoHost)
+
+	client, err := mongo.Connect(context.Background(), clientOptions)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 接続の確認
+    err = client.Ping(context.Background(), nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    logger.Debug("Success to connected")
+
+	mongoUserCollection := os.Getenv("MONGO_USER_COLLECTION_NAME")
+	if mongoUserCollection == "" {
 		logger.Error("does not exist MONGO_USER_COLLECTION_NAME.")
 		mongoUserCollection = "users"
 	}
@@ -408,10 +276,11 @@ func main() {
 
 	// expose these API
 	router := gin.Default()
-	router.GET("v1/profile/get", getMyProfile)
-	router.POST("v1/profile/edit", editMyProfile)
-	router.POST("v1/profile/create", editMyProfile)
-	router.DELETE("v1/profile/delete", deleteMyProfile)
+	router.Use(CORSMiddleware())
+	router.GET("v1/profile", getMyProfile)
+	// router.POST("v1/profile/edit", editMyProfile)
+	router.POST("v1/profile/create", createMyProfile)
+	// router.DELETE("v1/profile/delete", deleteMyProfile)
 	router.Run(port)
 
 }

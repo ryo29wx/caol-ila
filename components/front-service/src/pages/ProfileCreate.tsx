@@ -30,7 +30,7 @@ const ProfileCreate = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // const apiUrl = process.env.REACT_APP_ADDITEM_API;
-    const apiUrl = "http://localhost:50051/v1/profile/create";
+    const apiUrl = "http://localhost:50051";
 
     if (!imageUpload.file) {
       alert("プロフィール画像を選択してください。");
@@ -38,14 +38,14 @@ const ProfileCreate = () => {
     }
 
     const formData = new FormData();
-    formData.append('main_mage', imageUpload.file);
+    formData.append('main_image', imageUpload.file);
     formData.append('display_name', user.display_name);
     formData.append('gender', user.gender);
     formData.append('age', user.age);
     formData.append('title', user.title);
     formData.append('company', user.company);
     formData.append('company_email', user.company_email);
-
+    formData.append('description', user.description);
 
     try {
       const response = await fetch(`${apiUrl}/v1/profile/create`, {
@@ -150,10 +150,10 @@ const ProfileCreate = () => {
         <TextField
           margin="normal"
           fullWidth
-          id="detail"
+          id="description"
           label="自己紹介"
-          name="detail"
-          autoComplete="detail"
+          name="description"
+          autoComplete="description"
           autoFocus
           multiline
           rows={5} 

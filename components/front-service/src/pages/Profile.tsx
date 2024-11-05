@@ -1,164 +1,81 @@
-import React, { useState, ChangeEvent} from 'react';
-import { Box, Container, TextField, Button, Tooltip, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import React, { useState, useEffect} from 'react';
+import { Card, CardContent, Typography, Box, Grid, Avatar } from '@mui/material';
 
+interface UserData {
+  userid: string;
+  displayname: string;
+  gender: string;
+  age: number;
+  title: string;
+  company: string;
+  companyemail: string;
+  career: string;
+  academic: string;
+  description: string;
+  mainimage: string;
+  imagepath: string;
+  registday: string;
+  lastlogin: string;
+}
 
-type ImageUploadState = {
-    file: File | null;
-    previewUrl: string | null;
-};
+const Profile: React.FC = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
 
-const Profile = () => {
-  const [gender, setGender] = useState<string>('');
-  const [user, setUser] = useState({
-    display_name: '',
-    sex: 0,
-    age: 0,
-    title: '',
-    company: '',
-    company_email: '',
-    career: '',
-    academic: '',
-    main_image: '',
-    description: ''
-  });
+  // const apiUrl = process.env.REACT_APP_ADDITEM_API;
+  const apiUrl = 'http://localhost:50051';
+  const userid = '550e8400-e29b-41d4-a716-446655440000'; // for test 
 
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUser({ ...user, [e.target.name]: e.target.value });
-  };
-
-  
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const apiUrl = process.env.REACT_APP_ADDITEM_API;
-
-    try {
-      const response = await fetch(`${apiUrl}/v1/profile/create`, {
-        method: 'POST',
-        body: JSON.stringify(user)
-      });
-
-      if (!response.ok) {
-        throw new Error('Something went wrong');
+  useEffect(() => {
+    // データ取得
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/v1/profile?u=${userid}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error("データの取得に失敗しました。");
+        }
+      } catch (error) {
+        console.error("エラー:", error);
       }
+    };
 
-      const data = await response.json();
-      console.log(data); // Success handling
-    } catch (error) {
-      console.error(error); // Error handling
-    }
-  };
-
-  const [imageUpload, setImageUpload] = useState<ImageUploadState>({ file: null, previewUrl: null });
-
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-
-      setImageUpload({
-        file: file,
-        previewUrl: URL.createObjectURL(file),
-      });
-    }
-  };
+    fetchData();
+  }, []);
 
   return (
-    <Container component="main" maxWidth="xs">
-    <h2>プロフィール作成</h2>
-      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          id="display_name"
-          label="Display Name"
-          name="display_name"
-          autoComplete="display_name"
-          autoFocus
-          onChange={handleChange}
-        />
-        <FormControl component="fieldset">
-          <FormLabel component="legend">性別</FormLabel>
-          <RadioGroup value={gender} onChange={handleChange} row>
-            <FormControlLabel value="男" control={<Radio />} label="男" />
-            <FormControlLabel value="女" control={<Radio />} label="女" />
-            <FormControlLabel value="その他" control={<Radio />} label="その他" />
-          </RadioGroup>
-        </FormControl>
-        <TextField
-          margin="normal"
-          fullWidth
-          id="age"
-          label="表示年齢"
-          name="age"
-          autoComplete="age"
-          autoFocus
-          onChange={handleChange}
-        />
-        <TextField
-          margin="normal"
-          fullWidth
-          id="title"
-          label="ロール名・肩書"
-          name="title"
-          autoComplete="title"
-          autoFocus
-          onChange={handleChange}
-        />
-        <TextField
-          margin="normal"
-          fullWidth
-          id="company"
-          label="会社名"
-          name="company"
-          autoComplete="company"
-          autoFocus
-          onChange={handleChange}
-        />
-        <Tooltip title="認証に使います">
-          <TextField
-            margin="normal"
-            fullWidth
-            id="company_email"
-            label="会社のメールアドレス"
-            name="company_email"
-            autoComplete="company email"
-            autoFocus
-            onChange={handleChange}
-          />
-        </Tooltip>
-        <TextField
-          margin="normal"
-          fullWidth
-          id="detail"
-          label="自己紹介"
-          name="detail"
-          autoComplete="detail"
-          autoFocus
-          onChange={handleChange}
-        />
-        <div>
-          <input
-            accept="image/*"
-            style={{ display: 'none' }}
-            id="raised-button-file"
-            multiple
-            type="file"
-            onChange={handleImageChange}
-          />
-          <label htmlFor="raised-button-file">
-            <Button variant="contained" component="span">
-              Upload Image
-            </Button>
-          </label>
-          {imageUpload.previewUrl && <img src={imageUpload.previewUrl} alt="Preview" style={{ width: '100%', marginTop: '10px' }} />}
-        </div>
-        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-          Create
-        </Button>
-      </Box>
-    </Container>
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      {userData && (
+        <Card sx={{ maxWidth: 400, padding: 2 }}>
+          <CardContent>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+                  {userData.displayname.charAt(0)}
+                </Avatar>
+              </Grid>
+              <Grid item xs>
+                <Typography variant="h5" component="div">
+                  {userData.displayname}
+                </Typography>
+                <Typography color="text.secondary">
+                  {userData.companyemail}
+                </Typography>
+              </Grid>
+            </Grid>
+            <Box mt={2}>
+              <Typography variant="body1" color="text.primary">
+                年齢: {userData.age}歳
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mt={1}>
+                {userData.description}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+    </Box>
   );
 };
 
