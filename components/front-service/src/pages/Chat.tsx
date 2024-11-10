@@ -12,7 +12,7 @@ const Chat: React.FC = () => {
   const socket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    socket.current = new WebSocket('ws://localhost:50052/ws');
+    socket.current = new WebSocket('ws://localhost:50055/v1/chat/send');
 
     // Recieve messages from websocket server(go)
     socket.current.onmessage = (event: MessageEvent) => {
